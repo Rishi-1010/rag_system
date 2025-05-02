@@ -17,6 +17,7 @@
             </button>
         </div>
     </div>
+    <div id="alert-container" class="mt-4"></div>
     <div class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow-lg p-6">
             <h2 class="text-2xl font-bold mb-6">Upload Documents</h2>
@@ -61,12 +62,15 @@
                 <!-- Progress Container -->
                 <div id="progressContainer" class="hidden mt-6 bg-gray-50 rounded-lg p-4">
                     <div class="mb-3">
-                        <div class="flex justify-between items-center mb-1">
-                            <span id="progressStage" class="text-sm font-medium text-gray-700">Initializing...</span>
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center space-x-2">
+                                <div id="statusIndicator" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                                <span id="progressStage" class="text-sm font-medium text-gray-700">Initializing...</span>
+                            </div>
                             <span id="progressPercentage" class="text-sm font-medium text-gray-700">0%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                            <div id="progressBar" class="progress-bar-animated bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 bg-[length:200%_100%] h-2.5 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+                        <div class="progress-container w-full">
+                            <div id="progressBar" class="progress-bar-animated bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 bg-[length:200%_100%] transition-all duration-300 ease-out" style="width: 0%"></div>
                         </div>
                     </div>
                     <div class="flex justify-between text-xs text-gray-500">
@@ -98,12 +102,38 @@
 
     .progress-bar-animated {
         animation: progressBarAnimation 2s linear infinite;
+        height: 8px !important;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        min-width: 2%; /* Ensure minimum width for visibility */
     }
 
     /* Pause animation when upload is complete */
     .progress-bar-animated.complete {
         animation: none;
         background: theme('colors.blue.600');
+    }
+
+    /* Status indicator colors */
+    .status-initializing { background-color: theme('colors.gray.400'); }
+    .status-processing { background-color: theme('colors.blue.500'); }
+    .status-completed { background-color: theme('colors.green.500'); }
+    .status-error { background-color: theme('colors.red.500'); }
+
+    /* Progress bar container */
+    .progress-container {
+        background-color: theme('colors.gray.100');
+        border-radius: 4px;
+        padding: 2px;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        min-height: 8px; /* Ensure minimum height */
+    }
+
+    /* Ensure progress container is visible when active */
+    #progressContainer:not(.hidden) {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
 </style>
 <script>
@@ -255,12 +285,28 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        console.log('Upload started with files:', Array.from(files).map(f => f.name));
+
         // Hide any existing success message
         hideSuccessMessage();
 
-        uploadButton.disabled = true;
+        // Force show progress container
         progressContainer.classList.remove('hidden');
-        progressBar.style.width = '0%';
+        progressContainer.style.display = 'block';
+        progressContainer.style.opacity = '1';
+        progressContainer.style.visibility = 'visible';
+        
+        console.log('Progress container state:', {
+            hidden: progressContainer.classList.contains('hidden'),
+            display: progressContainer.style.display,
+            opacity: progressContainer.style.opacity,
+            visibility: progressContainer.style.visibility,
+            height: progressContainer.offsetHeight,
+            width: progressContainer.offsetWidth
+        });
+
+        uploadButton.disabled = true;
+        progressBar.style.width = '2%'; // Start with minimum visible width
         progressStage.textContent = 'Initializing...';
         progressPercentage.textContent = '0%';
 
@@ -270,6 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         try {
+            console.log('Sending upload request to /rag/upload');
             const response = await fetch('/rag/upload', {
                 method: 'POST',
                 body: formData,
@@ -278,23 +325,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            console.log('Upload response received:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Create EventSource for SSE
+            const eventSource = new EventSource('/rag/progress');
+            
+            eventSource.onmessage = function(event) {
+                console.log('SSE message received:', event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Parsed SSE data:', data);
+                    updateProgress(data);
+                } catch (e) {
+                    console.error('Error parsing SSE data:', e);
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('SSE error:', error);
+                eventSource.close();
+            };
+
+            // Read the response
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
 
             while (true) {
                 const {value, done} = await reader.read();
-                if (done) break;
+                if (done) {
+                    console.log('Stream reading completed');
+                    eventSource.close();
+                    break;
+                }
                 
                 const chunk = decoder.decode(value);
+                console.log('Received chunk:', chunk);
                 const lines = chunk.split('\n');
                 
                 lines.forEach(line => {
                     if (line.startsWith('data: ')) {
                         try {
                             const data = JSON.parse(line.slice(6));
+                            console.log('Parsed progress data:', data);
                             updateProgress(data);
                         } catch (e) {
-                            console.error('Error parsing progress data:', e);
+                            console.error('Error parsing progress data:', e, 'Raw line:', line);
                         }
                     }
                 });
@@ -304,31 +387,65 @@ document.addEventListener('DOMContentLoaded', function() {
             form.reset();
             fileList.innerHTML = '<p class="text-gray-500 text-sm">No files selected</p>';
             progressContainer.classList.add('hidden');
-            uploadButton.disabled = true;
+            uploadButton.disabled = false;
             showSuccessMessage();
 
         } catch (error) {
             console.error('Upload error:', error);
             alert('An error occurred while uploading the files');
             uploadButton.disabled = false;
+            progressContainer.classList.add('hidden');
         }
     });
 
     function updateProgress(data) {
-        if (data.status === 'processing') {
+        console.log('Updating progress with data:', data);
+        const statusIndicator = document.getElementById('statusIndicator');
+        const progressBar = document.getElementById('progressBar');
+        
+        // Log current state
+        console.log('Progress elements state:', {
+            container: {
+                hidden: progressContainer.classList.contains('hidden'),
+                display: progressContainer.style.display,
+                height: progressContainer.offsetHeight,
+                width: progressContainer.offsetWidth
+            },
+            progressBar: {
+                width: progressBar.style.width,
+                height: progressBar.offsetHeight,
+                visible: progressBar.offsetParent !== null
+            }
+        });
+        
+        if (data.status === 'processing' || data.status === 'success') {
             const stage = data.stage || 'processing';
             const progress = typeof data.progress === 'number' ? Math.round(data.progress) : 0;
             
-            const progressBar = document.getElementById('progressBar');
-            progressBar.style.width = `${progress}%`;
+            console.log('Processing stage:', stage, 'Progress:', progress);
+            
+            // Update status indicator
+            statusIndicator.className = 'w-3 h-3 rounded-full status-processing';
+            
+            // Ensure minimum width for visibility
+            const newWidth = Math.max(2, progress);
+            progressBar.style.width = `${newWidth}%`;
+            console.log('New progress bar width:', progressBar.style.width);
+            
             progressBar.classList.remove('complete');
             progressPercentage.textContent = `${progress}%`;
             progressStage.textContent = stageDescriptions[stage] || stage;
+
+            // Force progress bar visibility
+            progressBar.style.display = 'block';
+            progressBar.style.opacity = '1';
+            progressBar.style.visibility = 'visible';
 
             if (data.current && data.total) {
                 const currentChunk = parseInt(data.current) || 0;
                 const totalChunks = parseInt(data.total) || 1;
                 const percentage = Math.round((currentChunk / totalChunks) * 100);
+                console.log('Processing chunk:', currentChunk, 'of', totalChunks, 'Percentage:', percentage);
                 progressDetails.innerHTML = `
                     <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -342,15 +459,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 const timeInSeconds = parseInt(data.estimated_time) || 0;
                 estimatedTime.textContent = timeInSeconds > 0 ? `${formatTime(timeInSeconds)} remaining` : '';
             }
-        } else if (data.status === 'completed') {
-            const progressBar = document.getElementById('progressBar');
+        } else if (data.status === 'completed' || data.status === 'success') {
+            console.log('Processing completed');
+            // Update status indicator
+            statusIndicator.className = 'w-3 h-3 rounded-full status-completed';
+            
             progressBar.style.width = '100%';
             progressBar.classList.add('complete');
             progressPercentage.textContent = '100%';
             progressStage.textContent = 'Processing completed';
             progressDetails.innerHTML = `
+                <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                ${data.message || 'Processing completed successfully'}
             `;
             estimatedTime.textContent = '';
+        } else if (data.status === 'error') {
+            console.error('Processing error:', data.message);
+            // Update status indicator
+            statusIndicator.className = 'w-3 h-3 rounded-full status-error';
+            
+            progressStage.textContent = 'Error occurred';
+            progressDetails.innerHTML = `
+                <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                ${data.message || 'An error occurred during processing'}
+            `;
         }
     }
 

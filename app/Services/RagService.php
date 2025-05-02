@@ -28,29 +28,10 @@ class RagService
         $this->createIndexIfNotExists();
     }
 
-    public function indexDocument($filePath, $progressCallback = null)
+    public function indexDocument($filePath)
     {
         try {
             $startTime = microtime(true);
-            $totalSteps = 100;
-            $currentStep = 0;
-
-            // Helper function to update progress
-            $updateProgress = function($stage, $progress, $total = null) use ($progressCallback) {
-                if ($progressCallback) {
-                    $percentage = $total ? round(($progress / $total) * 100) : $progress;
-                    call_user_func($progressCallback, [
-                        'stage' => $stage,
-                        'progress' => $percentage,
-                        'current' => $progress,
-                        'total' => $total,
-                        'estimated_time' => null
-                    ]);
-                }
-            };
-
-            // Initial progress update
-            $updateProgress('initializing', 0);
 
             if (!$this->elasticsearch) {
                 throw new Exception("Elasticsearch is not configured");
@@ -63,14 +44,10 @@ class RagService
                 throw new Exception("File not found: $filePath");
             }
 
-            // Update progress for file reading stage (10%)
-            $updateProgress('reading', 10);
-
             // Get file extension
             $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
             
             // Extract text based on file type
-            $extractStartTime = microtime(true);
             if ($extension === 'pdf') {
                 // Use pdftotext if available
                 $output = [];
@@ -90,25 +67,13 @@ class RagService
                 $content = file_get_contents($filePath);
             }
 
-            // Update progress for text extraction (20%)
-            $updateProgress('extracting', 20);
-
             if (empty($content)) {
                 throw new Exception("No valid text content could be extracted from the file");
             }
 
-            $cleanStartTime = microtime(true);
             $content = $this->cleanText($content);
-            
-            // Update progress for text cleaning (30%)
-            $updateProgress('cleaning', 30);
-
-            $chunkStartTime = microtime(true);
             $chunks = $this->chunkText($content, 800);
             $totalChunks = count($chunks);
-
-            // Update progress for chunking (40%)
-            $updateProgress('chunking', 40, $totalChunks);
 
             if (empty($chunks)) {
                 throw new Exception("No valid text chunks could be created from the file");
@@ -122,15 +87,9 @@ class RagService
 
             $batchSize = 10;
             $processedChunks = 0;
-            $embeddingStartTime = microtime(true);
-
-            // Calculate time per chunk after first batch for estimation
-            $timePerChunk = null;
 
             // Process chunks in batches
-            foreach (array_chunk($chunks, $batchSize) as $batchIndex => $batchChunks) {
-                $batchStartTime = microtime(true);
-                
+            foreach (array_chunk($chunks, $batchSize) as $batchChunks) {
                 // Generate embeddings for the batch
                 $batchEmbeddings = [];
                 foreach ($batchChunks as $chunk) {
@@ -157,34 +116,10 @@ class RagService
                 }
                 
                 $processedChunks += count($batchChunks);
-                $batchEndTime = microtime(true);
-                $batchTime = $batchEndTime - $batchStartTime;
-
-                // Calculate estimated time after first batch
-                if ($batchIndex === 0) {
-                    $timePerChunk = $batchTime / count($batchChunks);
-                    $estimatedTotalTime = $timePerChunk * $totalChunks;
-                }
-
-                // Calculate progress (40-95%)
-                $processingProgress = 40 + ($processedChunks / $totalChunks * 55);
-                
-                // Calculate estimated time remaining
-                $estimatedTimeRemaining = null;
-                if ($timePerChunk) {
-                    $remainingChunks = $totalChunks - $processedChunks;
-                    $estimatedTimeRemaining = round($timePerChunk * $remainingChunks);
-                }
-
-                // Update progress with processing information
-                $updateProgress('processing', $processingProgress, $totalChunks);
 
                 // Small delay to prevent overwhelming the API
                 usleep(100000); // 100ms delay between batches
             }
-
-            // Final progress update (100%)
-            $updateProgress('completed', 100);
 
             $totalTime = round(microtime(true) - $startTime, 2);
             Log::info("Total processing time for {$fileName}: {$totalTime} seconds");
@@ -517,6 +452,41 @@ class RagService
             return $result;
         } catch (Exception $e) {
             Log::error('Error listing all documents: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function checkFileExists($fileName)
+    {
+        try {
+            Log::info('Checking if file exists in Elasticsearch:', ['fileName' => $fileName]);
+            
+            $response = $this->elasticsearch->search([
+                'index' => $this->indexName,
+                'body' => [
+                    'query' => [
+                        'term' => [
+                            'sourceName.keyword' => $fileName
+                        ]
+                    ],
+                    'size' => 0
+                ]
+            ]);
+
+            $exists = $response['hits']['total']['value'] > 0;
+            Log::info('File existence check result:', [
+                'fileName' => $fileName,
+                'exists' => $exists,
+                'totalHits' => $response['hits']['total']['value']
+            ]);
+
+            return $exists;
+        } catch (\Exception $e) {
+            Log::error('Error checking file existence in Elasticsearch:', [
+                'fileName' => $fileName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }

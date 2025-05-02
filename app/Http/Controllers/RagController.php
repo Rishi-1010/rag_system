@@ -16,6 +16,17 @@ class RagController extends Controller
         $this->ragService = $ragService;
     }
 
+    private function checkFileExists($fileName)
+    {
+        try {
+            $result = $this->ragService->checkFileExists($fileName);
+            return $result;
+        } catch (\Exception $e) {
+            Log::error('Error checking file existence: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function index()
     {
         return view('rag.index');
@@ -23,196 +34,109 @@ class RagController extends Controller
 
     public function upload(Request $request)
     {
-        // Create a simple debug file in the public directory
-        $debugFile = public_path('debug.txt');
-        
         try {
-            // Ensure we can write to the debug file
-            if (!is_writable(dirname($debugFile))) {
-                chmod(dirname($debugFile), 0777);
-            }
-            
-            // Clear the debug file for this request
-            file_put_contents($debugFile, date('Y-m-d H:i:s') . " - New upload request started\n");
-            
-            // Log basic request info
-            $requestInfo = [
-                'method' => $request->method(),
-                'url' => $request->fullUrl(),
-                'headers' => $request->headers->all(),
-                'all' => $request->all(),
-                'files' => $request->allFiles(),
-                'content_type' => $request->header('Content-Type'),
-                'accept' => $request->header('Accept')
-            ];
-            
-            file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Request info: " . json_encode($requestInfo, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
-            
-            // If this is a GET request, it's the SSE connection
-            if ($request->isMethod('get')) {
-                file_put_contents($debugFile, date('Y-m-d H:i:s') . " - SSE connection established\n", FILE_APPEND);
-                
-                return response()->stream(function() use ($debugFile) {
-                    // Keep the connection open
-                    while (true) {
-                        if (connection_aborted()) {
-                            file_put_contents($debugFile, date('Y-m-d H:i:s') . " - SSE connection closed\n", FILE_APPEND);
-                            break;
-                        }
-                        echo "data: " . json_encode(['status' => 'connected']) . "\n\n";
-                        ob_flush();
-                        flush();
-                        sleep(1);
-                    }
-                }, 200, [
-                    'Cache-Control' => 'no-cache',
-                    'Content-Type' => 'text/event-stream',
-                    'X-Accel-Buffering' => 'no',
-                    'Connection' => 'keep-alive'
-                ]);
-            }
-            
             if (!$request->hasFile('files')) {
-                file_put_contents($debugFile, date('Y-m-d H:i:s') . " - No files in request\n", FILE_APPEND);
                 return response()->json(['error' => 'No files uploaded'], 400);
             }
 
-            // Increase limits for this request
             ini_set('memory_limit', '512M');
-            ini_set('max_execution_time', '900'); // 15 minutes
-            set_time_limit(900); // 15 minutes
-
-            // Enable implicit flush for real-time progress
-            if (function_exists('apache_setenv')) {
-                apache_setenv('no-gzip', '1');
-            }
-            ini_set('zlib.output_compression', '0');
-            ini_set('implicit_flush', '1');
-            ob_implicit_flush(1);
+            ini_set('max_execution_time', '900');
+            set_time_limit(900);
 
             $files = $request->file('files');
             if (!is_array($files)) {
                 $files = [$files];
             }
 
-            file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Processing " . count($files) . " files\n", FILE_APPEND);
-
             $maxFileSize = 50 * 1024 * 1024; // 50MB in bytes
             $results = [];
-            
-            foreach ($files as $file) {
-                try {
-                    $fileInfo = [
-                        'name' => $file->getClientOriginalName(),
-                        'size' => $file->getSize(),
-                        'type' => $file->getMimeType()
-                    ];
-                    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Processing file: " . json_encode($fileInfo) . "\n", FILE_APPEND);
 
-                    if (!$file->isValid()) {
-                        file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Invalid file: " . $file->getClientOriginalName() . "\n", FILE_APPEND);
+            return response()->stream(function () use ($files, $maxFileSize, &$results) {
+                foreach ($files as $file) {
+                    try {
+                        if (!$file->isValid()) {
+                            $results[] = [
+                                'name' => $file->getClientOriginalName(),
+                                'status' => 'error',
+                                'message' => 'Invalid file'
+                            ];
+                            echo 'data: ' . json_encode(['status' => 'error', 'stage' => 'validation', 'message' => 'Invalid file']) . "\n\n";
+                            ob_flush(); flush();
+                            continue;
+                        }
+
+                        if ($file->getSize() > $maxFileSize) {
+                            $results[] = [
+                                'name' => $file->getClientOriginalName(),
+                                'status' => 'error',
+                                'message' => 'File size exceeds limit of 50MB'
+                            ];
+                            echo 'data: ' . json_encode(['status' => 'error', 'stage' => 'validation', 'message' => 'File size exceeds limit of 50MB']) . "\n\n";
+                            ob_flush(); flush();
+                            continue;
+                        }
+
+                        if ($this->checkFileExists($file->getClientOriginalName())) {
+                            $results[] = [
+                                'name' => $file->getClientOriginalName(),
+                                'status' => 'duplicate',
+                                'message' => 'This file has already been processed and indexed. Please upload a different file.',
+                                'type' => 'error'
+                            ];
+                            echo 'data: ' . json_encode(['status' => 'duplicate', 'stage' => 'validation', 'message' => 'This file has already been processed and indexed. Please upload a different file.']) . "\n\n";
+                            ob_flush(); flush();
+                            continue;
+                        }
+
+                        $tempPath = storage_path('app' . DIRECTORY_SEPARATOR . 'temp');
+                        if (!file_exists($tempPath)) {
+                            mkdir($tempPath, 0755, true);
+                        }
+                        $filename = uniqid() . '_' . $file->getClientOriginalName();
+                        $fullPath = $tempPath . DIRECTORY_SEPARATOR . $filename;
+                        if (!$file->move($tempPath, $filename)) {
+                            throw new Exception("Failed to move uploaded file");
+                        }
+
+                        $startTime = microtime(true);
+                        $progressCallback = function ($progress) use ($file) {
+                            $progress['file'] = $file->getClientOriginalName();
+                            echo 'data: ' . json_encode($progress) . "\n\n";
+                            ob_flush(); flush();
+                        };
+                        $this->ragService->indexDocument($fullPath, $progressCallback);
+                        if (file_exists($fullPath)) {
+                            unlink($fullPath);
+                        }
+                        $processingTime = round(microtime(true) - $startTime, 2);
+                        $results[] = [
+                            'name' => $file->getClientOriginalName(),
+                            'status' => 'success',
+                            'message' => "File processed successfully in {$processingTime} seconds"
+                        ];
+                        echo 'data: ' . json_encode(['status' => 'success', 'stage' => 'completed', 'file' => $file->getClientOriginalName(), 'message' => "File processed successfully in {$processingTime} seconds"]) . "\n\n";
+                        ob_flush(); flush();
+                    } catch (Exception $e) {
                         $results[] = [
                             'name' => $file->getClientOriginalName(),
                             'status' => 'error',
-                            'message' => 'Invalid file'
+                            'message' => $e->getMessage()
                         ];
-                        continue;
+                        echo 'data: ' . json_encode(['status' => 'error', 'stage' => 'exception', 'file' => $file->getClientOriginalName(), 'message' => $e->getMessage()]) . "\n\n";
+                        ob_flush(); flush();
                     }
-
-                    if ($file->getSize() > $maxFileSize) {
-                        file_put_contents($debugFile, date('Y-m-d H:i:s') . " - File too large: " . $file->getClientOriginalName() . " (" . $file->getSize() . " bytes)\n", FILE_APPEND);
-                        $results[] = [
-                            'name' => $file->getClientOriginalName(),
-                            'status' => 'error',
-                            'message' => 'File size exceeds limit of 50MB'
-                        ];
-                        continue;
-                    }
-
-                    // Ensure temp directory exists
-                    $tempPath = storage_path('app' . DIRECTORY_SEPARATOR . 'temp');
-                    if (!file_exists($tempPath)) {
-                        file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Creating temp directory\n", FILE_APPEND);
-                        mkdir($tempPath, 0755, true);
-                    }
-
-                    // Generate a unique filename
-                    $filename = uniqid() . '_' . $file->getClientOriginalName();
-                    $fullPath = $tempPath . DIRECTORY_SEPARATOR . $filename;
-
-                    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Moving file to: " . $fullPath . "\n", FILE_APPEND);
-
-                    // Move the file directly
-                    if (!$file->move($tempPath, $filename)) {
-                        throw new Exception("Failed to move uploaded file");
-                    }
-
-                    // Process the file and send progress updates
-                    $startTime = microtime(true);
-                    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Starting document indexing\n", FILE_APPEND);
-                    
-                    $this->ragService->indexDocument($fullPath, function($progress) use ($file, $debugFile) {
-                        $response = [
-                            'status' => 'processing',
-                            'file' => $file->getClientOriginalName(),
-                            'progress' => $progress
-                        ];
-                        file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Progress update: " . json_encode($response) . "\n", FILE_APPEND);
-                        echo "data: " . json_encode($response) . "\n\n";
-                        ob_flush();
-                        flush();
-                    });
-
-                    // Clean up
-                    if (file_exists($fullPath)) {
-                        file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Cleaning up temp file\n", FILE_APPEND);
-                        unlink($fullPath);
-                    }
-
-                    $processingTime = round(microtime(true) - $startTime, 2);
-                    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - File processing completed in {$processingTime} seconds\n", FILE_APPEND);
-
-                    $results[] = [
-                        'name' => $file->getClientOriginalName(),
-                        'status' => 'success',
-                        'message' => "File processed successfully in {$processingTime} seconds"
-                    ];
-
-                    // Send final progress update
-                    $response = [
-                        'status' => 'completed',
-                        'file' => $file->getClientOriginalName(),
-                        'progress' => 100
-                    ];
-                    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Sending completion update\n", FILE_APPEND);
-                    echo "data: " . json_encode($response) . "\n\n";
-                    ob_flush();
-                    flush();
-
-                } catch (Exception $e) {
-                    $errorMessage = 'Error processing file ' . $file->getClientOriginalName() . ': ' . $e->getMessage();
-                    file_put_contents($debugFile, date('Y-m-d H:i:s') . " - " . $errorMessage . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
-                    $results[] = [
-                        'name' => $file->getClientOriginalName(),
-                        'status' => 'error',
-                        'message' => $e->getMessage()
-                    ];
                 }
-            }
-
-            file_put_contents($debugFile, date('Y-m-d H:i:s') . " - Upload process completed\n", FILE_APPEND);
-            return response()->json([
-                'message' => 'Files processed',
-                'results' => $results
+                // Final completion event
+                echo 'data: ' . json_encode(['status' => 'completed', 'results' => $results]) . "\n\n";
+                ob_flush(); flush();
+            }, 200, [
+                'Content-Type' => 'text/event-stream',
+                'Cache-Control' => 'no-cache',
+                'Connection' => 'keep-alive',
             ]);
         } catch (Exception $e) {
-            $errorMessage = 'Upload error: ' . $e->getMessage();
-            file_put_contents($debugFile, date('Y-m-d H:i:s') . " - " . $errorMessage . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
-            
-            // Return a proper JSON error response
             return response()->json([
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'error' => $e->getMessage()
             ], 500);
         }
     }

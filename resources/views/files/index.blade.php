@@ -37,11 +37,13 @@
     </nav>
 
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        @if (session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <span class="block sm:inline">{{ session('success') }}</span>
-            </div>
-        @endif
+        <div id="alert-container">
+            @if (session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                </div>
+            @endif
+        </div>
 
         <div class="px-4 py-6 sm:px-0">
             <div class="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -54,7 +56,7 @@
                     </p>
                 </div>
                 <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
-                    <form action="{{ route('files.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <form id="upload-form" action="{{ route('files.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
                         @csrf
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Upload File</label>
