@@ -1,0 +1,100 @@
+2025-05-02 13:33:36 - New upload request started
+2025-05-02 13:33:36 - Request info: {
+    "method": "POST",
+    "url": "http:\/\/127.0.0.1:8000\/rag\/upload",
+    "headers": {
+        "host": [
+            "127.0.0.1:8000"
+        ],
+        "connection": [
+            "keep-alive"
+        ],
+        "content-length": [
+            "1041309"
+        ],
+        "pragma": [
+            "no-cache"
+        ],
+        "cache-control": [
+            "no-cache"
+        ],
+        "sec-ch-ua-platform": [
+            "\"Windows\""
+        ],
+        "x-csrf-token": [
+            "o4RRZTXlWxYghf2nnFeMKXvMV7vV9XOvSLygNwYK"
+        ],
+        "user-agent": [
+            "Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/135.0.0.0 Safari\/537.36"
+        ],
+        "sec-ch-ua": [
+            "\"Google Chrome\";v=\"135\", \"Not-A.Brand\";v=\"8\", \"Chromium\";v=\"135\""
+        ],
+        "content-type": [
+            "multipart\/form-data; boundary=----WebKitFormBoundaryUIR8RuK4h51BN52q"
+        ],
+        "sec-ch-ua-mobile": [
+            "?0"
+        ],
+        "accept": [
+            "*\/*"
+        ],
+        "origin": [
+            "http:\/\/127.0.0.1:8000"
+        ],
+        "sec-fetch-site": [
+            "same-origin"
+        ],
+        "sec-fetch-mode": [
+            "cors"
+        ],
+        "sec-fetch-dest": [
+            "empty"
+        ],
+        "referer": [
+            "http:\/\/127.0.0.1:8000\/home"
+        ],
+        "accept-encoding": [
+            "gzip, deflate, br, zstd"
+        ],
+        "accept-language": [
+            "en-IN,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,bm;q=0.6,gu;q=0.5,co;q=0.4"
+        ],
+        "cookie": [
+            "XSRF-TOKEN=eyJpdiI6IkhLUmU3UGxQNmh3QWYvbmloQkdPN0E9PSIsInZhbHVlIjoicVE1UHhYNC9wbkVBdnpnMUdIdVlLakVpb25MZVk2RjZZRUY5MWwrSUZVSWI5Qm5Oamcwb1lUb0tESXlobHN5Y0QzdnRrUXhoZFU4YlZ4TTByQ09pdk9lOU11bTBQY29temZZNzFyVWoxNk8xb2JqcXErUVArbHpVSk5JUXZOWDEiLCJtYWMiOiJjNmZkZTE2N2U3NGUwODU2ZTNjNmIzZGE3NTY4OThjNzA5ZTcyMmMxYjc4YTExY2NhM2RkZDVkOTk4NTc4YTI0IiwidGFnIjoiIn0%3D; laravel_session=eyJpdiI6Ik13WWM2eVZTL0JnK2t6Tm9kZWhVa1E9PSIsInZhbHVlIjoiSFJ6K2RpNWdMTUpHbTR1NFVLZ0U0U0NCd3ZWeis2eGd6YkgzZExsOWIwcDF5NThyL012NWZBMEgxVUNqazVkYjFuWDZKRUs2ek10dzVjZmFhblpWTGlXN21adk9kMnh5TzJWcm9Mb01LMjI1TUR6dS85eDgyUnJjM0k2SVl5WEsiLCJtYWMiOiJhYmM5NzFiZDA1ZDczMzI0NThkMzM4MTRhNDlhNTg4YzZiNzM0M2E1MmRiYWY3NzYyZGRiNTExNjkyNzgxNzM4IiwidGFnIjoiIn0%3D"
+        ]
+    },
+    "all": {
+        "files": [
+            {}
+        ]
+    },
+    "files": {
+        "files": [
+            {}
+        ]
+    },
+    "content_type": "multipart\/form-data; boundary=----WebKitFormBoundaryUIR8RuK4h51BN52q",
+    "accept": "*\/*"
+}
+2025-05-02 13:33:36 - Processing 1 files
+2025-05-02 13:33:36 - Processing file: {"name":"AI_act.pdf","size":1041117,"type":"application\/pdf"}
+2025-05-02 13:33:36 - Moving file to: C:\xampp\htdocs\rag-system\storage\app\temp\6814c9b0b10b1_AI_act.pdf
+2025-05-02 13:33:36 - Starting document indexing
+2025-05-02 13:33:36 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"initializing","progress":0,"current":0,"total":null,"estimated_time":null}}
+2025-05-02 13:33:36 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"reading","progress":10,"current":10,"total":null,"estimated_time":null}}
+2025-05-02 13:33:39 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"extracting","progress":20,"current":20,"total":null,"estimated_time":null}}
+2025-05-02 13:33:39 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"cleaning","progress":30,"current":30,"total":null,"estimated_time":null}}
+2025-05-02 13:33:39 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"chunking","progress":57,"current":40,"total":70,"estimated_time":null}}
+2025-05-02 13:33:48 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":68,"current":47.857142857142854,"total":70,"estimated_time":null}}
+2025-05-02 13:33:55 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":80,"current":55.714285714285715,"total":70,"estimated_time":null}}
+2025-05-02 13:34:03 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":91,"current":63.57142857142857,"total":70,"estimated_time":null}}
+2025-05-02 13:34:09 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":102,"current":71.42857142857143,"total":70,"estimated_time":null}}
+2025-05-02 13:34:16 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":113,"current":79.28571428571428,"total":70,"estimated_time":null}}
+2025-05-02 13:34:28 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":124,"current":87.14285714285714,"total":70,"estimated_time":null}}
+2025-05-02 13:34:35 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"processing","progress":136,"current":95,"total":70,"estimated_time":null}}
+2025-05-02 13:34:35 - Progress update: {"status":"processing","file":"AI_act.pdf","progress":{"stage":"completed","progress":100,"current":100,"total":null,"estimated_time":null}}
+2025-05-02 13:34:35 - Cleaning up temp file
+2025-05-02 13:34:35 - File processing completed in 58.47 seconds
+2025-05-02 13:34:35 - Sending completion update
+2025-05-02 13:34:35 - Upload process completed

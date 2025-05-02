@@ -1,0 +1,201 @@
+[01-May-2025 07:42:20 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:42:20 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:42:20 Europe/Berlin] File size: 1041117
+[01-May-2025 07:42:20 Europe/Berlin] PHP Fatal error:  Uncaught Error: Class "RagService" not found in C:\xampp\htdocs\rag-system\src\public\api\upload.php:72
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\rag-system\src\public\api\upload.php on line 72
+[01-May-2025 07:43:26 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:43:26 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:43:26 Europe/Berlin] File size: 1041117
+[01-May-2025 07:43:26 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:43:26 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:43:26 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:43:26 Europe/Berlin] PHP Fatal error:  Uncaught Error: Class "RagService" not found in C:\xampp\htdocs\rag-system\src\public\api\upload.php:80
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\rag-system\src\public\api\upload.php on line 80
+[01-May-2025 07:44:14 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:44:14 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:44:14 Europe/Berlin] File size: 1041117
+[01-May-2025 07:44:14 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:44:14 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:44:14 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:44:14 Europe/Berlin] Error in upload.php: File not found: %PDF-1.4%‚„œ”
+905 0 obj<</Linearized 1/L 1041117/O 907/E 785687/N 12/T 1022896/H [ 956 480]>>endobj          
+xref
+905 32
+0000000016 00000 n
+0000001634 00000 n
+0000001804 00000 n
+0000002176 00000 n
+0000003367 00000 n
+0000004563 00000 n
+0000004600 00000 n
+0000004704 00000 n
+0000006782 00000 n
+0000008118 00000 n
+0000010195 00000 n
+0000011520 00000 n
+0000011634 00000 n
+0000012947 00000 n
+0000014140 00000 n
+0000015223 00000 n
+0000016341 00000 n
+0000017535 00000 n
+0000019611 00000 n
+0000020936 00000 n
+0000022107 00000 n
+0000023237 00000 n
+0000024454 00000 n
+0000025502 00000 n
+0000078355 00000 n
+0000132510 00000 n
+0000189144 00000 n
+0000681815 00000 n
+0000707093 00000 n
+0000708183 00000 n
+0000001436 00000 n
+0000000956 00000 n
+trailer
+<</Size 937/Root 906 0 R/Info 122 0 R/ID[<A82BCB3C535A204AB2DFFC18F7D6BC3D><ED633F351BBF994AA17F737C52D37C26>]/Prev 1022884/XRefStm 1436>>
+startxref
+0
+%%EOF
+              
+936 0 obj<</C 466/Filter/FlateDecode/I 488/Length 385/O 450/S 322>>stream
+hﬁb```f``’a`e`Pp`a@
+[01-May-2025 07:44:14 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\rag-system\src\rag\RagService.php(60): Rag\RagService->readFileContent('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...')
+#1 C:\xampp\htdocs\rag-system\src\public\api\upload.php(111): Rag\RagService->indexDocument('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...', 'doc_17460782545...')
+#2 {main}
+[01-May-2025 07:44:21 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:44:21 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:44:21 Europe/Berlin] File size: 1041117
+[01-May-2025 07:44:21 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:44:21 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:44:21 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:44:21 Europe/Berlin] Error in upload.php: File not found: %PDF-1.4%‚„œ”
+905 0 obj<</Linearized 1/L 1041117/O 907/E 785687/N 12/T 1022896/H [ 956 480]>>endobj          
+xref
+905 32
+0000000016 00000 n
+0000001634 00000 n
+0000001804 00000 n
+0000002176 00000 n
+0000003367 00000 n
+0000004563 00000 n
+0000004600 00000 n
+0000004704 00000 n
+0000006782 00000 n
+0000008118 00000 n
+0000010195 00000 n
+0000011520 00000 n
+0000011634 00000 n
+0000012947 00000 n
+0000014140 00000 n
+0000015223 00000 n
+0000016341 00000 n
+0000017535 00000 n
+0000019611 00000 n
+0000020936 00000 n
+0000022107 00000 n
+0000023237 00000 n
+0000024454 00000 n
+0000025502 00000 n
+0000078355 00000 n
+0000132510 00000 n
+0000189144 00000 n
+0000681815 00000 n
+0000707093 00000 n
+0000708183 00000 n
+0000001436 00000 n
+0000000956 00000 n
+trailer
+<</Size 937/Root 906 0 R/Info 122 0 R/ID[<A82BCB3C535A204AB2DFFC18F7D6BC3D><ED633F351BBF994AA17F737C52D37C26>]/Prev 1022884/XRefStm 1436>>
+startxref
+0
+%%EOF
+              
+936 0 obj<</C 466/Filter/FlateDecode/I 488/Length 385/O 450/S 322>>stream
+hﬁb```f``’a`e`Pp`a@
+[01-May-2025 07:44:21 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\rag-system\src\rag\RagService.php(60): Rag\RagService->readFileContent('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...')
+#1 C:\xampp\htdocs\rag-system\src\public\api\upload.php(111): Rag\RagService->indexDocument('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...', 'doc_17460782618...')
+#2 {main}
+[01-May-2025 07:45:48 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:45:48 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:45:48 Europe/Berlin] File size: 1041117
+[01-May-2025 07:45:48 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:45:48 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:45:48 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:45:48 Europe/Berlin] Error in upload.php: Failed to generate embedding: Malformed UTF-8 characters, possibly incorrectly encoded
+[01-May-2025 07:45:48 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\rag-system\src\rag\RagService.php(44): Rag\RagService->generateEmbedding('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...')
+#1 C:\xampp\htdocs\rag-system\src\public\api\upload.php(111): Rag\RagService->indexDocument('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...', 'doc_17460783483...')
+#2 {main}
+[01-May-2025 07:45:59 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:45:59 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:45:59 Europe/Berlin] File size: 1041117
+[01-May-2025 07:45:59 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:45:59 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:45:59 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:45:59 Europe/Berlin] Error in upload.php: Failed to generate embedding: Malformed UTF-8 characters, possibly incorrectly encoded
+[01-May-2025 07:45:59 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\rag-system\src\rag\RagService.php(44): Rag\RagService->generateEmbedding('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...')
+#1 C:\xampp\htdocs\rag-system\src\public\api\upload.php(111): Rag\RagService->indexDocument('%PDF-1.4\r%\xE2\xE3\xCF\xD3\r...', 'doc_17460783589...')
+#2 {main}
+[01-May-2025 07:46:43 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:46:43 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:46:43 Europe/Berlin] File size: 1041117
+[01-May-2025 07:46:43 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:46:43 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:46:43 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:46:47 Europe/Berlin] Error in upload.php: Failed to generate embedding: This model's maximum context length is 8192 tokens, however you requested 8904 tokens (8904 in your prompt; 0 for the completion). Please reduce your prompt; or completion length.
+[01-May-2025 07:46:47 Europe/Berlin] Stack trace: #0 C:\xampp\htdocs\rag-system\src\rag\RagService.php(44): Rag\RagService->generateEmbedding('BRIEFING EU Leg...')
+#1 C:\xampp\htdocs\rag-system\src\public\api\upload.php(128): Rag\RagService->indexDocument('BRIEFING EU Leg...', 'doc_17460784030...')
+#2 {main}
+[01-May-2025 07:48:37 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:48:37 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:48:37 Europe/Berlin] File size: 1041117
+[01-May-2025 07:48:37 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:48:37 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:48:37 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:52:37 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:52:37 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:52:37 Europe/Berlin] File size: 1041117
+[01-May-2025 07:52:37 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:52:37 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:52:37 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:54:38 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:54:38 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:54:38 Europe/Berlin] File size: 1041117
+[01-May-2025 07:54:38 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:54:38 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:54:38 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 07:59:58 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 07:59:58 Europe/Berlin] File type: application/pdf
+[01-May-2025 07:59:58 Europe/Berlin] File size: 1041117
+[01-May-2025 07:59:58 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 07:59:58 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 07:59:58 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 08:01:18 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 08:01:18 Europe/Berlin] File type: application/pdf
+[01-May-2025 08:01:18 Europe/Berlin] File size: 1041117
+[01-May-2025 08:01:18 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 08:01:18 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 08:01:18 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 08:02:42 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 08:02:42 Europe/Berlin] File type: application/pdf
+[01-May-2025 08:02:42 Europe/Berlin] File size: 1041117
+[01-May-2025 08:02:42 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 08:02:42 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 08:02:42 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 08:04:30 Europe/Berlin] Processing file: AI_act.pdf
+[01-May-2025 08:04:30 Europe/Berlin] File type: application/pdf
+[01-May-2025 08:04:30 Europe/Berlin] File size: 1041117
+[01-May-2025 08:04:30 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 08:04:30 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 08:04:30 Europe/Berlin] Elasticsearch API Key configured: 1
+[01-May-2025 08:04:48 Europe/Berlin] Processing file: handyman_feature_doc.pdf
+[01-May-2025 08:04:48 Europe/Berlin] File type: application/pdf
+[01-May-2025 08:04:48 Europe/Berlin] File size: 21599
+[01-May-2025 08:04:48 Europe/Berlin] OpenAI API Key configured: 1
+[01-May-2025 08:04:48 Europe/Berlin] Elasticsearch URL: http://localhost:9200
+[01-May-2025 08:04:48 Europe/Berlin] Elasticsearch API Key configured: 1

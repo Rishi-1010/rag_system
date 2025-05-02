@@ -1,0 +1,65 @@
+TO CHECK WHETHER HOW MUCH SIZE OF THE EMBEDDINGS ARE STORED IN ELASTIC SEARCH
+/
+ table listing all your indices
+
+GET _cat/indices?v
+
+
+
+To delete the whole INDICE:
+
+DELETE llphant
+
+To Get Only the First Chunk of Any File
+GET llphant/_search
+{
+  "_source": ["chunk_number", "content", "embedding_vector", "source"],
+  "query": {
+    "term": { "chunk_number": 1 }
+  }
+}
+
+To Get All Chunks for a Specific File
+GET llphant/_search
+{
+  "_source": ["chunk_number", "content", "embedding_vector", "source"],
+  "query": {
+    "term": { "source.keyword": "C:\\xampp\\htdocs\\rag-system/data/AI_act.pdf" }
+  },
+  "size": 100
+}
+
+TO GET ALL THE FILES WHICH ARE EMBEDDED
+
+  GET llphant/_search
+  {
+    "size": 0,
+    "aggs": {
+      "all_files": {
+        "terms": {
+          "field": "sourceName.keyword",
+          "size": 1000
+        }
+      }
+    }
+  }
+
+TO DELETE A SPECIFIC FILE EMBEDDINGS
+
+POST llphant/_delete_by_query
+{
+  "query": {
+    "term": {
+      "sourceName.keyword": "handyman_feature_doc.pdf"  // or "handyman_qna_30.txt"
+    }
+  }
+}
+
+DELETES ALL DOCUMENTS FROM THE INDICE
+
+POST llphant/_delete_by_query
+{
+  "query": {
+    "match_all": {}
+  }
+}

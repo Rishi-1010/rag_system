@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.status-message {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+.status-message.success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+.status-message.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+.status-message.info {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+#fileList li {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.25rem;
+}
+#fileList li.success {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+#fileList li.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}

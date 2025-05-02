@@ -1,0 +1,554 @@
+[
+    {
+        "username": "featureuser1",
+        "date": "2025-01-23",
+        "question": "What roles are available in the system?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "The system includes Admin, Provider, Handyman, and Customer roles."
+            }
+        ]
+    },
+    {
+        "username": "featureuser2",
+        "date": "2025-01-23",
+        "question": "Can users filter services by category?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, users can search and filter services by category, price range, rating, and other criteria."
+            }
+        ]
+    },
+    {
+        "username": "featureuser3",
+        "date": "2025-01-23",
+        "question": "Does the system support location-based services?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app displays services based on the user's location, provided location permissions are enabled."
+            }
+        ]
+    },
+    {
+        "username": "featureuser4",
+        "date": "2025-01-23",
+        "question": "What payment gateways are supported?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "The system supports Stripe, RazorPay, PayPal, PhonePe, Paystack, FlutterWave, and more."
+            }
+        ]
+    },
+    {
+        "username": "featureuser5",
+        "date": "2025-01-23",
+        "question": "Can users book services by hourly time slots?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the system includes an hourly service time counter and allows users to book services based on available time slots."
+            }
+        ]
+    },
+    {
+        "username": "featureuser6",
+        "date": "2025-01-23",
+        "question": "Does the app support online or remote services?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app allows for remote services that can be provided online without physical presence."
+            }
+        ]
+    },
+    {
+        "username": "featureuser7",
+        "date": "2025-01-23",
+        "question": "What cancellation policy features are available?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "The admin can set a cancellation charge percentage and specific time limits for cancellations."
+            }
+        ]
+    },
+    {
+        "username": "featureuser8",
+        "date": "2025-01-23",
+        "question": "Can the system handle multiple bookings at the same time?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers can manage multiple bookings in the same time slot, depending on the availability of their team."
+            }
+        ]
+    },
+    {
+        "username": "featureuser9",
+        "date": "2025-01-23",
+        "question": "Does the app support a wallet feature?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app includes an in-app wallet where users and providers can manage funds and request withdrawals."
+            }
+        ]
+    },
+    {
+        "username": "featureuser10",
+        "date": "2025-01-23",
+        "question": "Can providers set availability for services?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers can set availability time slots to allow users to book services conveniently."
+            }
+        ]
+    },
+    {
+        "username": "featureuser11",
+        "date": "2025-01-23",
+        "question": "Does the app support push notifications?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports push notifications using Firebase, allowing real-time updates for bookings, offers, and system alerts."
+            }
+        ]
+    },
+    {
+        "username": "featureuser12",
+        "date": "2025-01-23",
+        "question": "Can users leave reviews for services?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, users can leave reviews and ratings for services and providers after booking completion."
+            }
+        ]
+    },
+    {
+        "username": "featureuser13",
+        "date": "2025-01-23",
+        "question": "Can admins manage taxes in the app?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, admins can set and manage taxes through the system to apply them to bookings and services."
+            }
+        ]
+    },
+    {
+        "username": "featureuser14",
+        "date": "2025-01-23",
+        "question": "Can providers add extra charges to bookings?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers or handymen can add extra charges for additional items or services during booking completion."
+            }
+        ]
+    },
+    {
+        "username": "featureuser15",
+        "date": "2025-01-23",
+        "question": "Does the app support multi-language functionality?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports multi-language functionality, allowing users to switch between languages."
+            }
+        ]
+    },
+    {
+        "username": "featureuser16",
+        "date": "2025-01-23",
+        "question": "Is there a subscription model for providers?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports subscription plans for providers to access platform features based on their tier."
+            }
+        ]
+    },
+    {
+        "username": "featureuser17",
+        "date": "2025-01-23",
+        "question": "Can the admin configure service categories?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the admin can create and manage service categories and subcategories from the admin panel."
+            }
+        ]
+    },
+    {
+        "username": "featureuser18",
+        "date": "2025-01-23",
+        "question": "Does the app support coupons and discounts?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app includes a coupon and discount feature for users to save on services."
+            }
+        ]
+    },
+    {
+        "username": "featureuser19",
+        "date": "2025-01-23",
+        "question": "Can providers manage their own profiles?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers can update their profiles, including service details, pricing, and availability."
+            }
+        ]
+    },
+    {
+        "username": "featureuser20",
+        "date": "2025-01-23",
+        "question": "Can services be bundled into packages?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, services can be bundled into packages by the admin or providers to offer users better value."
+            }
+        ]
+    },
+    {
+        "username": "featureuser21",
+        "date": "2025-01-23",
+        "question": "Does the app include an in-app chat feature?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app has an in-app chat feature to facilitate communication between users and providers."
+            }
+        ]
+    },
+    {
+        "username": "featureuser22",
+        "date": "2025-01-23",
+        "question": "Can the admin approve or reject services before publishing?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, admins can approve or reject services added by providers before they go live on the platform."
+            }
+        ]
+    },
+    {
+        "username": "featureuser23",
+        "date": "2025-01-23",
+        "question": "Does the app support dark mode?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports light, dark, and system default themes for a customizable user experience."
+            }
+        ]
+    },
+    {
+        "username": "featureuser24",
+        "date": "2025-01-23",
+        "question": "Can the admin manage commissions for providers?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the admin can set and manage commissions for providers and handymen through the admin panel."
+            }
+        ]
+    },
+    {
+        "username": "featureuser25",
+        "date": "2025-01-23",
+        "question": "Does the app include tracking for handyman locations?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app includes real-time location tracking for handymen during service delivery."
+            }
+        ]
+    },
+    {
+        "username": "featureuser26",
+        "date": "2025-01-23",
+        "question": "Can users save their favorite services or providers?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, users can save their favorite services or providers for easy access in the future."
+            }
+        ]
+    },
+    {
+        "username": "featureuser27",
+        "date": "2025-01-23",
+        "question": "Does the app have a review moderation system?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, admins can moderate user reviews to ensure quality and remove inappropriate content."
+            }
+        ]
+    },
+    {
+        "username": "featureuser28",
+        "date": "2025-01-23",
+        "question": "Can providers bid on user job requests?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers can bid on job requests posted by users, offering competitive pricing and availability."
+            }
+        ]
+    },
+    {
+        "username": "featureuser29",
+        "date": "2025-01-23",
+        "question": "Does the app allow users to post job requests?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, users can post detailed job requests and wait for providers to bid on them."
+            }
+        ]
+    },
+    {
+        "username": "featureuser30",
+        "date": "2025-01-23",
+        "question": "Can the app send booking reminders?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app sends automated booking reminders to both users and providers."
+            }
+        ]
+    },
+    {
+        "username": "featureuser31",
+        "date": "2025-01-23",
+        "question": "Can handymen toggle their availability status?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, handymen can set their availability status to online or offline via the app."
+            }
+        ]
+    },
+    {
+        "username": "featureuser32",
+        "date": "2025-01-23",
+        "question": "Does the app support refunds for cancellations?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports refunds based on the admin-defined cancellation policy."
+            }
+        ]
+    },
+    {
+        "username": "featureuser33",
+        "date": "2025-01-23",
+        "question": "Can admins set global advance payment rules?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, admins can set global advance payment percentages for fixed services in the system."
+            }
+        ]
+    },
+    {
+        "username": "featureuser34",
+        "date": "2025-01-23",
+        "question": "Does the app include subscription management for providers?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app includes subscription management for providers, allowing them to subscribe to different tiers with specific benefits."
+            }
+        ]
+    },
+    {
+        "username": "featureuser35",
+        "date": "2025-01-23",
+        "question": "Can users track booking status in real-time?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, users can track the status of their bookings in real-time from their dashboard."
+            }
+        ]
+    },
+    {
+        "username": "featureuser36",
+        "date": "2025-01-23",
+        "question": "Does the app allow setting commission percentages for handymen?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the admin can set and customize commission percentages for handymen through the admin panel."
+            }
+        ]
+    },
+    {
+        "username": "featureuser37",
+        "date": "2025-01-23",
+        "question": "Can the app be configured to work only with cash payments?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the admin can enable only cash payment options via the payment configuration settings."
+            }
+        ]
+    },
+    {
+        "username": "featureuser38",
+        "date": "2025-01-23",
+        "question": "Does the app include real-time notifications?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app sends real-time notifications for booking updates, payments, and other important events."
+            }
+        ]
+    },
+    {
+        "username": "featureuser39",
+        "date": "2025-01-23",
+        "question": "Can the admin view detailed payment breakdowns?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, admins can view detailed payment breakdowns, including earnings by role, taxes, and discounts."
+            }
+        ]
+    },
+    {
+        "username": "featureuser40",
+        "date": "2025-01-23",
+        "question": "Does the app support multi-currency payments?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports multi-currency payments depending on the payment gateways configured."
+            }
+        ]
+    },
+    {
+        "username": "featureuser41",
+        "date": "2025-01-23",
+        "question": "Can providers set extra charges for additional services?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers can set extra charges for any additional services or items required during service delivery."
+            }
+        ]
+    },
+    {
+        "username": "featureuser42",
+        "date": "2025-01-23",
+        "question": "Can users receive email notifications?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports email notifications for users, including booking confirmations and payment receipts."
+            }
+        ]
+    },
+    {
+        "username": "featureuser43",
+        "date": "2025-01-23",
+        "question": "Does the app have a maintenance mode feature?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the admin can enable maintenance mode to temporarily disable access while updates are applied."
+            }
+        ]
+    },
+    {
+        "username": "featureuser44",
+        "date": "2025-01-23",
+        "question": "Can providers offer promotional discounts?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, providers can create promotional discounts to attract users to their services."
+            }
+        ]
+    },
+    {
+        "username": "featureuser45",
+        "date": "2025-01-23",
+        "question": "Does the app support multiple login options?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app supports multiple login options, including Google, Apple, and OTP-based logins."
+            }
+        ]
+    },
+    {
+        "username": "featureuser46",
+        "date": "2025-01-23",
+        "question": "Does the app have a help desk feature?",
+        "responses": [
+            {
+                "username": "assistant",
+                "date": "2025-01-23",
+                "answer": "Yes, the app includes a help desk feature for user and provider support."
+            }
+        ]
+    }
+]

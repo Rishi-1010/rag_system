@@ -1,0 +1,9 @@
+npm install
+
+npm run dev
+
+php artisan serve
+
+
+
+TO RUN IN BACKEND 

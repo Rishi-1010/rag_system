@@ -1,0 +1,90 @@
+Q: Who can manage service pricing and availability?
+A: Provider
+
+Q: Who can view and filter all available services?
+A: User
+
+Q: What does the 'nagarsheth' refer to?
+A: Merchant community chief
+
+Q: What type of payment allows booking through app wallet?
+A: In-App Wallet
+
+Q: Who can receive booking requests and assign to handymen?
+A: Provider
+
+Q: What is used for tracking handyman location?
+A: Real-Time Tracking
+
+Q: Which feature enables extra service options during booking?
+A: Add-On Services
+
+Q: Who can top up their in-app wallet?
+A: User
+
+Q: What allows users to cancel bookings within limits?
+A: Cancellation Policy
+
+Q: Which role sets service categories?
+A: Admin
+
+Q: What system sends booking and status alerts?
+A: Push Notifications
+
+Q: How can users contact providers in-app?
+A: In-App Chat
+
+Q: Which payment method allows cash transactions?
+A: Cash on Delivery
+
+Q: What can providers set for fair handyman payouts?
+A: Custom Commissions
+
+Q: What allows scheduling of working hours?
+A: Availability Time Slots
+
+Q: What feature tracks time for hourly services?
+A: Hourly Service Time Counter
+
+Q: Who manages earnings and commissions?
+A: Admin
+
+Q: How can users sort services?
+A: Search and Filter
+
+Q: What allows bundled services at a discount?
+A: Service Packages
+
+Q: What is required for online remote services?
+A: Internet
+
+Q: What lets users save preferred services?
+A: Favorite Services
+
+Q: What is the booking confirmation message called?
+A: Notification
+
+Q: What mode lets you change app theme?
+A: Theme Mode
+
+Q: Who can create and send notification templates?
+A: Admin
+
+Q: What feature enables multi-language use?
+A: Multi-Language Support
+
+Q: Who handles user queries in Help Desk?
+A: Admin
+
+Q: What do users receive after service payment?
+A: Invoice
+
+Q: How do providers get job offers from users?
+A: Bid on Job Requests
+
+Q: Who can assign services to themselves?
+A: Provider
+
+Q: How can payment breakdowns be viewed?
+A: Booking Details
+
