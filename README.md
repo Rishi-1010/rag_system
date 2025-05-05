@@ -45,8 +45,32 @@ These are set in:
 - Composer
 - Node.js & npm
 - OpenAI API Key
-- Elasticsearch (run via Docker)
-- (Optional) Docker & Docker Compose for easy setup
+- Docker & Docker Compose (for Elasticsearch and Kibana)
+
+### Installation Commands
+
+**Install Composer:**
+```bash
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php
+php -r "unlink('composer-setup.php');"
+# Move composer.phar to a directory in your PATH, e.g.:
+# mv composer.phar /usr/local/bin/composer
+```
+
+**Install Node.js & npm:**
+- Download from https://nodejs.org/ or use a package manager:
+```bash
+# On Ubuntu/Debian
+sudo apt update && sudo apt install nodejs npm
+# On Mac (with Homebrew)
+brew install node
+```
+
+**Start Elasticsearch & Kibana (Docker Compose):**
+```bash
+docker-compose up --build
+```
 
 ---
 
