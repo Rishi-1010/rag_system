@@ -11,7 +11,6 @@ A Laravel-based Retrieval-Augmented Generation (RAG) system with document upload
 - Embedding generation via OpenAI
 - Storage and retrieval using Elasticsearch
 - Chat interface
-- Admin dashboard
 
 ---
 
