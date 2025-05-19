@@ -146,13 +146,7 @@
             function addMessage(content, isUser = false) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-
-                if (!isUser) {
-                    messageDiv.innerHTML = content;
-                } else {
-                    messageDiv.textContent = content;
-                }
-
+                messageDiv.textContent = content;
                 messagesContainer.appendChild(messageDiv);
                 scrollToBottom();
             }
@@ -190,11 +184,12 @@
                     });
 
                     const data = await response.json();
-                    console.log("RAW BOT RESPONSE:", data.answer); // Debug log
+                    
                     // Hide typing indicator
                     hideTypingIndicator();
+
                     // Add bot response to chat
-                    addMessage(data.answer);
+                    addMessage(data.response);
                 } catch (error) {
                     console.error('Error:', error);
                     hideTypingIndicator();

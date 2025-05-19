@@ -55,9 +55,6 @@ class Client
             return "Context: " . $item['text'];
         }, $context));
 
-        // Add instruction for bullet points
-        $instruction = "Please answer in clear, concise bullet points. Each point should be on a new line, and do not include introductory or summary sentences.";
-
-        return "$instruction\n\nQuestion: {$question}\n\nContext:\n{$contextText}\n\nAnswer:";
+        return "Question: {$question}\n\nContext:\n{$contextText}\n\nAnswer:";
     }
 } 

@@ -2,20 +2,25 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class File extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'filename',
-        'original_name',
-        'path',
-        'size',
         'mime_type',
-        'embedding_status'
+        'embedding_status',
+        'original_name',
+        'size',
+        'path',
+        'project_id'
     ];
 
-    protected $casts = [
-        'size' => 'integer',
-    ];
-} 
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
+}

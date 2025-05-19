@@ -8,8 +8,6 @@ use OpenAI\Client as OpenAIClient;
 use OpenAI\Factory;
 use Illuminate\Support\Facades\Log;
 use Exception;
-use PhpOffice\PhpWord\IOFactory;
-use PhpOffice\PhpWord\PhpWord;
 
 class RagService
 {
@@ -64,66 +62,9 @@ class RagService
                 } else {
                     $content = implode("\n", $output);
                 }
-            } elseif ($extension === 'docx') {
-                // Use PhpWord for DOCX files
-                try {
-                    if (!class_exists('PhpOffice\PhpWord\IOFactory')) {
-                        throw new Exception("PhpWord library is not properly installed. Please run 'composer require phpoffice/phpword'");
-                    }
-                    
-                    Log::info("Starting DOCX processing for file: " . $filePath);
-                    
-                    $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
-                    $content = '';
-                    $sectionCount = 0;
-                    $elementCount = 0;
-                    
-                    foreach ($phpWord->getSections() as $section) {
-                        $sectionCount++;
-                        Log::info("Processing section " . $sectionCount);
-                        
-                        foreach ($section->getElements() as $element) {
-                            $elementCount++;
-                            
-                            // Log the type of element we're processing
-                            $elementType = get_class($element);
-                            Log::info("Processing element " . $elementCount . " of type: " . $elementType);
-                            
-                            if (method_exists($element, 'getText')) {
-                                $text = $element->getText();
-                                if (!empty($text)) {
-                                    $content .= $text . "\n";
-                                    Log::info("Extracted text from element: " . substr($text, 0, 100) . "...");
-                                }
-                            } else {
-                                Log::info("Element does not have getText method");
-                            }
-                        }
-                    }
-                    
-                    Log::info("DOCX processing completed. Sections: " . $sectionCount . ", Elements: " . $elementCount);
-                    
-                    if (empty($content)) {
-                        // Try alternative method if no content was extracted
-                        Log::info("No content extracted with primary method, trying alternative approach");
-                        $content = $this->extractDocxContentAlternative($filePath);
-                    }
-                    
-                    if (empty($content)) {
-                        throw new Exception("No text content could be extracted from the DOCX file. Processed " . $sectionCount . " sections and " . $elementCount . " elements.");
-                    }
-                    
-                    Log::info("Successfully extracted " . strlen($content) . " characters from DOCX file");
-                    
-                } catch (\Exception $e) {
-                    Log::error("Error processing DOCX file: " . $e->getMessage());
-                    throw new Exception("Failed to process DOCX file: " . $e->getMessage());
-                }
-            } elseif ($extension === 'txt') {
+            } else {
                 // For text files
                 $content = file_get_contents($filePath);
-            } else {
-                throw new Exception("Unsupported file type: {$extension}");
             }
 
             if (empty($content)) {
@@ -190,11 +131,8 @@ class RagService
         }
     }
 
-    public function answerQuestion($question)
+    public function answerQuestion($question, $allowedFilenames = [])
     {
-        // Test log to confirm function call
-        file_put_contents(__DIR__ . '/../../ragservice_debug.log', "answerQuestion called\n", FILE_APPEND);
-
         try {
             if (empty($question)) {
                 throw new Exception("Question cannot be empty");
@@ -202,7 +140,10 @@ class RagService
 
             $this->originalQuery = $question;
             $embedding = $this->generateEmbedding($question);
-            $similarDocs = $this->searchSimilarDocuments($embedding);
+            // $similarDocs = $this->searchSimilarDocuments($embedding);
+            // Pass allowedFilenames to the document search
+            $similarDocs = $this->searchSimilarDocuments($embedding, $allowedFilenames);
+
 
             if (empty($similarDocs['hits']['hits'])) {
                 return "I couldn't find any relevant information to answer your question.";
@@ -263,52 +204,60 @@ class RagService
         }
     }
 
-    private function searchSimilarDocuments($embedding)
+    private function searchSimilarDocuments($embedding, $allowedFilenames = [])
     {
         try {
             if (empty($embedding)) {
                 throw new Exception("Embedding cannot be empty");
             }
 
+            $boolQuery = [
+                'should' => [
+                    [
+                        'script_score' => [
+                            'query' => [
+                                'match_all' => new \stdClass()
+                            ],
+                            'script' => [
+                                'source' => 'cosineSimilarity(params.query_vector, "embedding") + 1.0',
+                                'params' => ['query_vector' => $embedding]
+                            ]
+                        ]
+                    ],
+                    [
+                        'match' => [
+                            'content' => [
+                                'query' => $this->getOriginalQuery(),
+                                'boost' => 0.3
+                            ]
+                        ]
+                    ]
+                ],
+                'minimum_should_match' => 1
+            ];
+
+            // 🔒 Add filter for specific document filenames if provided
+            if (!empty($allowedFilenames)) {
+                $boolQuery['filter'] = [
+                    ['terms' => ['sourceName.keyword' => $allowedFilenames]]
+                ];
+            }
+
             $searchResult = $this->elasticsearch->search([
                 'index' => $this->indexName,
                 'body' => [
-                    'size' => 10,  // Increased from 5 to 10 for better coverage
+                    'size' => 10,
                     'query' => [
-                        'bool' => [
-                            'should' => [
-                                [
-                                    'script_score' => [
-                                        'query' => [
-                                            'match_all' => new \stdClass()
-                                        ],
-                                        'script' => [
-                                            'source' => 'cosineSimilarity(params.query_vector, "embedding") + 1.0',
-                                            'params' => ['query_vector' => $embedding]
-                                        ]
-                                    ]
-                                ],
-                                [
-                                    'match' => [
-                                        'content' => [
-                                            'query' => $this->getOriginalQuery(),
-                                            'boost' => 0.3
-                                        ]
-                                    ]
-                                ]
-                            ],
-                            'minimum_should_match' => 1
-                        ]
+                        'bool' => $boolQuery
                     ],
                     '_source' => ['content', 'file_path', 'sourceName', 'chunk_index'],
                     'track_scores' => true
                 ]
             ]);
 
-            // Log search results for debugging
             Log::info('Search query: ' . $this->getOriginalQuery());
             Log::info('Total hits: ' . $searchResult['hits']['total']['value']);
-            
+
             foreach ($searchResult['hits']['hits'] as $hit) {
                 Log::info('Document found:', [
                     'file' => $hit['_source']['sourceName'],
@@ -324,6 +273,68 @@ class RagService
             throw $e;
         }
     }
+
+    // private function searchSimilarDocuments($embedding)
+    // {
+    //     try {
+    //         if (empty($embedding)) {
+    //             throw new Exception("Embedding cannot be empty");
+    //         }
+
+    //         $searchResult = $this->elasticsearch->search([
+    //             'index' => $this->indexName,
+    //             'body' => [
+    //                 'size' => 10,  // Increased from 5 to 10 for better coverage
+    //                 'query' => [
+    //                     'bool' => [
+    //                         'should' => [
+    //                             [
+    //                                 'script_score' => [
+    //                                     'query' => [
+    //                                         'match_all' => new \stdClass()
+    //                                     ],
+    //                                     'script' => [
+    //                                         'source' => 'cosineSimilarity(params.query_vector, "embedding") + 1.0',
+    //                                         'params' => ['query_vector' => $embedding]
+    //                                     ]
+    //                                 ]
+    //                             ],
+    //                             [
+    //                                 'match' => [
+    //                                     'content' => [
+    //                                         'query' => $this->getOriginalQuery(),
+    //                                         'boost' => 0.3
+    //                                     ]
+    //                                 ]
+    //                             ]
+    //                         ],
+    //                         'minimum_should_match' => 1
+    //                     ]
+    //                 ],
+    //                 '_source' => ['content', 'file_path', 'sourceName', 'chunk_index'],
+    //                 'track_scores' => true
+    //             ]
+    //         ]);
+
+    //         // Log search results for debugging
+    //         Log::info('Search query: ' . $this->getOriginalQuery());
+    //         Log::info('Total hits: ' . $searchResult['hits']['total']['value']);
+            
+    //         foreach ($searchResult['hits']['hits'] as $hit) {
+    //             Log::info('Document found:', [
+    //                 'file' => $hit['_source']['sourceName'],
+    //                 'chunk_index' => $hit['_source']['chunk_index'] ?? 'N/A',
+    //                 'score' => $hit['_score'],
+    //                 'content_preview' => substr($hit['_source']['content'], 0, 100) . '...'
+    //             ]);
+    //         }
+
+    //         return $searchResult;
+    //     } catch (Exception $e) {
+    //         Log::error('Error searching similar documents: ' . $e->getMessage());
+    //         throw $e;
+    //     }
+    // }
 
     private function getOriginalQuery()
     {
@@ -550,33 +561,6 @@ class RagService
                 'trace' => $e->getTraceAsString()
             ]);
             throw $e;
-        }
-    }
-
-    private function extractDocxContentAlternative($filePath)
-    {
-        try {
-            $content = '';
-            $zip = new \ZipArchive();
-            
-            if ($zip->open($filePath) === TRUE) {
-                // Read the document.xml file from the DOCX
-                $content = $zip->getFromName('word/document.xml');
-                $zip->close();
-                
-                if ($content) {
-                    // Remove XML tags and decode entities
-                    $content = strip_tags($content);
-                    $content = html_entity_decode($content, ENT_QUOTES | ENT_XML1, 'UTF-8');
-                    $content = preg_replace('/\s+/', ' ', $content);
-                    $content = trim($content);
-                }
-            }
-            
-            return $content;
-        } catch (\Exception $e) {
-            Log::error("Alternative DOCX extraction failed: " . $e->getMessage());
-            return '';
         }
     }
 } 

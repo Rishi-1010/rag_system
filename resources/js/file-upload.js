@@ -219,6 +219,7 @@ function initializeFileUpload() {
 
             if (completedResults && completedResults.length > 0 && completedResults.every(r => r.status === 'success')) {
                 debugLog('🔄 All operations successful, resetting form');
+                refreshUploadedFiles();
                 this.reset();
             } else {
                 debugLog('⚠️ Not resetting form due to errors or non-success status');
@@ -483,3 +484,12 @@ function updateProgress(progress) {
         progressBar.style.width = `${progress.progress}%`;
     }
 } 
+
+function refreshUploadedFiles() {
+    fetch('/rag/uploaded-files')
+        .then(res => res.text())
+        .then(html => {
+            // Update the uploaded files section
+            document.getElementById('uploadedFiles').innerHTML = html;
+        });
+}

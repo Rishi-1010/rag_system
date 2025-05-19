@@ -15,7 +15,7 @@ class RagServiceProvider extends ServiceProvider
         // Register OpenAI Client
         $this->app->singleton(OpenAIClient::class, function ($app) {
             $apiKey = config('services.openai.api_key');
-            
+
             if (!$apiKey) {
                 throw new \Exception('OpenAI API key not configured');
             }
@@ -25,17 +25,20 @@ class RagServiceProvider extends ServiceProvider
 
         // Register RagService
         $this->app->singleton(RagService::class, function ($app) {
-            $elasticsearchHost = config('services.elasticsearch.host');
+            $elasticsearchHost = config('services.elasticsearch.host') ?? 'http://localhost:9200';
             $elasticsearchApiKey = config('services.elasticsearch.api_key');
 
-            if (!$elasticsearchHost || !$elasticsearchApiKey) {
-                throw new \Exception('Elasticsearch configuration missing');
+            $clientBuilder = ClientBuilder::create()
+                ->setHosts([$elasticsearchHost]);
+
+            // Only set API key if it exists (for secured ES)
+            if (!empty($elasticsearchApiKey)) {
+                $clientBuilder->setApiKey($elasticsearchApiKey);
+            } else {
+                logger()->info('Elasticsearch API key not set — skipping authentication (likely in dev mode).');
             }
 
-            $elasticsearch = ClientBuilder::create()
-                ->setHosts([$elasticsearchHost])
-                ->setApiKey($elasticsearchApiKey)
-                ->build();
+            $elasticsearch = $clientBuilder->build();
 
             return new RagService(
                 $app->make(OpenAIClient::class),
@@ -48,4 +51,4 @@ class RagServiceProvider extends ServiceProvider
     {
         //
     }
-} 
+}

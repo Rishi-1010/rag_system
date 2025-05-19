@@ -7,6 +7,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\QAController;
 use App\Http\Controllers\RagController;
 use App\Http\Controllers\ChatController;
+use App\Models\File;
 
 // Root route - redirect to login if not authenticated
 Route::get('/', function () {
@@ -27,9 +28,13 @@ Route::middleware('guest')->group(function () {
 
 // Protected routes (only accessible when logged in)
 Route::middleware('auth')->group(function () {
-    Route::get('/home', function () {
-        return view('rag.index');
-    })->name('home');
+
+        // Route::get('/home', function () {
+        //     $uploadedFiles = File::latest()->get(); 
+        //     return view('rag.index', compact('uploadedFiles'));
+        // })->name('home');
+    Route::get('/home', [RagController::class, 'index'])->name('home');
+
     
     // RAG System Routes
     Route::prefix('rag')->name('rag.')->group(function () {
@@ -43,18 +48,26 @@ Route::middleware('auth')->group(function () {
             return response()->json(['token' => csrf_token()]);
         });
 
-        Route::get('/', function () {
-            return view('rag.index');
-        })->name('index');
+        // Route::get('/', function () {
+        //     $uploadedFiles = File::latest()->get();
+        //     return view('rag.index', compact('uploadedFiles'));
+        //     // return view('rag.index');
+        // })->name('index');
+        Route::get('/', [RagController::class, 'index'])->name('index');
 
-        Route::get('/ask', function () {
-            return view('rag.ask');
-        })->name('ask.show');
+        // Route::get('/ask', function () {
+        //     return view('rag.ask');
+        // })->name('ask.show');
 
-        Route::post('/ask', [RagController::class, 'ask'])->name('ask');
+        Route::get('/ask', [RagController::class, 'ask'])->name('ask.show');
+        Route::post('/ask', [RagController::class, 'storeask'])->name('ask');
         Route::match(['get', 'post'], '/upload', [RagController::class, 'upload'])->name('upload');
         Route::post('/delete', [RagController::class, 'deleteDocument'])->name('delete');
         Route::get('/list-documents', [RagController::class, 'listDocuments'])->name('list-documents');
+        Route::get('/files/data', [RagController::class, 'getUploadedFiles'])->name('files.data');
+
+        // PROJECTS
+        Route::post('/projects', [RagController::class, 'storeProject']);
     });
     
     // Files Routes

@@ -91,17 +91,9 @@ class QuestionAnswerer
 
     private function generateAnswer(string $question, array $context): string
     {
-        // Test log to confirm function call
-        file_put_contents(__DIR__ . '/../../../openai_debug.log', "generateAnswer called\n", FILE_APPEND);
-
         $contextText = implode("\n\n", array_map(function($doc) {
             return $doc->content;
         }, $context));
-
-        // Add instruction for bullet points
-        $instruction = "Please answer in clear, concise bullet points. Each point should be on a new line, and do not include introductory or summary sentences.";
-
-        $userPrompt = "$instruction\n\nContext:\n$contextText\n\nQuestion: $question";
 
         $response = $this->openai->chat()->create([
             'model' => 'gpt-3.5-turbo',
@@ -112,15 +104,12 @@ class QuestionAnswerer
                 ],
                 [
                     'role' => 'user',
-                    'content' => $userPrompt
+                    'content' => "Context:\n$contextText\n\nQuestion: $question"
                 ]
             ],
             'temperature' => 0.7,
             'max_tokens' => 500
         ]);
-
-        // Debug: Log the raw response
-        file_put_contents(__DIR__ . '/../../../openai_debug.log', print_r($response->choices[0]->message->content, true) . "\n---\n", FILE_APPEND);
 
         return $response->choices[0]->message->content;
     }
