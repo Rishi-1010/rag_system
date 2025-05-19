@@ -8,6 +8,9 @@ A Laravel-based Retrieval-Augmented Generation (RAG) system with document upload
 
 - User authentication (login/register)
 - Document upload and processing (PDF, TXT, DOC, DOCX)
+  - Enhanced DOCX processing with multiple extraction methods
+  - Automatic fallback to alternative extraction if primary method fails
+  - Detailed logging for document processing
 - Embedding generation via OpenAI
 - Storage and retrieval using Elasticsearch
 - Chat interface
@@ -46,6 +49,7 @@ These are set in:
 - Node.js & npm
 - OpenAI API Key
 - Docker & Docker Compose (for Elasticsearch and Kibana)
+- PhpWord library (for DOCX processing)
 
 ### Installation Commands
 
@@ -65,6 +69,11 @@ php -r "unlink('composer-setup.php');"
 sudo apt update && sudo apt install nodejs npm
 # On Mac (with Homebrew)
 brew install node
+```
+
+**Install PhpWord (for DOCX processing):**
+```bash
+composer require phpoffice/phpword
 ```
 
 **Start Elasticsearch & Kibana (Docker Compose):**
@@ -128,6 +137,24 @@ docker-compose up --build
 
 ---
 
+## Document Processing
+
+The system supports multiple document formats with enhanced processing capabilities:
+
+### Supported Formats
+- PDF (using pdftotext or native PHP parser)
+- DOCX (using PhpWord with fallback to ZipArchive)
+- TXT (direct text processing)
+
+### Processing Features
+- Automatic text extraction
+- Content validation
+- Detailed logging
+- Error handling with fallback methods
+- Chunking for optimal embedding generation
+
+---
+
 ## Testing RAG Functionality
 
 You can test the RAG (Retrieval-Augmented Generation) functionality directly from the command line using the `src/rag.php` script. This is useful for testing embeddings and QA functionality independently of the web interface.
@@ -174,35 +201,53 @@ Make sure your environment variables (`OPENAI_API_KEY` and `ELASTIC_API_KEY`) ar
 
 - Make sure Elasticsearch is running and accessible at the URL specified in your `.env`.
 - For production, update your credentials and environment variables accordingly.
+- Check the Laravel logs (`storage/logs/laravel.log`) for detailed document processing information.
 
+---
 
+## Troubleshooting
 
+### Document Processing Issues
+- Check the Laravel logs for detailed processing information
+- Verify file permissions and paths
+- Ensure all required PHP extensions are installed
+- For DOCX files, verify PhpWord installation
+
+### Elasticsearch Issues
+- Verify Elasticsearch is running
+- Check connection settings in `.env`
+- Ensure proper index mapping exists
+
+---
 
 TO RUN BACKEND LOGIC OF RAG USE THESE CMDS:
 
-
 TO GENERATE EMBEDDINGS FOR A DOCUMENT
 
+```bash
 php src/rag_auto.php index data/<filename>
+```
 
+This cmd will generate the embeddings.
+On http://localhost:5601/app/dev_tools#/console
+you can get all the files which are embedded by this command:
 
-this cmd will generate the embeddings.
-on http://localhost:5601/app/dev_tools#/console
-you can get all the files which are embedded by this command
-
- GET llphant/_search
-  {
-    "size": 0,
-    "aggs": {
-      "all_files": {
-        "terms": {
-          "field": "sourceName.keyword",
-          "size": 1000
-        }
+```json
+GET llphant/_search
+{
+  "size": 0,
+  "aggs": {
+    "all_files": {
+      "terms": {
+        "field": "sourceName.keyword",
+        "size": 1000
       }
     }
   }
+}
+```
 
-![Elasticsearch Aggregation Example](image.png)
-
-  
+To ask a question:
+```bash
+php src/rag.php ask "What are the main points in the document?"
+```

@@ -89,6 +89,12 @@
     </div>
 </div>
 
+<div class="response-container mt-4 p-4 bg-white rounded-lg shadow">
+    <div class="response-content prose max-w-none">
+        {!! nl2br(e($response)) !!}
+    </div>
+</div>
+
 @push('scripts')
 <style>
     @keyframes progressBarAnimation {
@@ -134,6 +140,24 @@
         display: block !important;
         opacity: 1 !important;
         visibility: visible !important;
+    }
+
+    .response-content {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    .response-content pre {
+        background-color: #f3f4f6;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+    }
+    .response-content code {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #f3f4f6;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
     }
 </style>
 <script>
@@ -514,6 +538,43 @@ document.addEventListener('DOMContentLoaded', function() {
             successMessage.classList.add('hidden');
         }, 500);
     }
+
+    // Format code blocks in responses
+    function formatCodeBlocks() {
+        const responseContent = document.querySelector('.response-content');
+        if (responseContent) {
+            // Replace ```language\n with <pre><code class="language-">
+            let content = responseContent.innerHTML;
+            content = content.replace(/```(\w+)\n/g, '<pre><code class="language-$1">');
+            // Replace ``` with </code></pre>
+            content = content.replace(/```/g, '</code></pre>');
+            responseContent.innerHTML = content;
+
+            // Apply syntax highlighting if needed
+            if (typeof hljs !== 'undefined') {
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightBlock(block);
+                });
+            }
+        }
+    }
+
+    // Format code blocks when response is received
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                formatCodeBlocks();
+            }
+        });
+    });
+
+    const responseContainer = document.querySelector('.response-container');
+    if (responseContainer) {
+        observer.observe(responseContainer, { childList: true, subtree: true });
+    }
+
+    // Initial format
+    formatCodeBlocks();
 });
 </script>
 @endpush

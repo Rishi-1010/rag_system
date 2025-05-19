@@ -149,7 +149,8 @@ class RagController extends Controller
 
         try {
             $response = $this->ragService->answerQuestion($request->message);
-            return response()->json(['answer' => $response]);
+            $responseWithBr = str_replace("\n", "<br>", $response);
+            return response()->json(['answer' => $responseWithBr]);
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'An error occurred while processing your request.',

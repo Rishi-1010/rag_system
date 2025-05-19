@@ -24,9 +24,19 @@ GET llphant/_search
 {
   "_source": ["chunk_number", "content", "embedding_vector", "source"],
   "query": {
-    "term": { "source.keyword": "C:\\xampp\\htdocs\\rag-system/data/AI_act.pdf" }
+    "term": { "source.keyword": "C:\\xampp\\htdocs\\rag-system/data/unit 6.docx" }
   },
   "size": 100
+}
+
+To Get All Chunks for UNIT 6.docx
+GET llphant/_search
+{
+  "_source": ["content", "source"],
+  "query": {
+    "term": { "sourceName.keyword": "UNIT 6.docx" }
+  },
+  "size": 67
 }
 
 TO GET ALL THE FILES WHICH ARE EMBEDDED

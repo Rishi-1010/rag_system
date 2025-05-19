@@ -8,6 +8,8 @@ use OpenAI\Client as OpenAIClient;
 use OpenAI\Factory;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
 
 class RagService
 {
@@ -62,9 +64,66 @@ class RagService
                 } else {
                     $content = implode("\n", $output);
                 }
-            } else {
+            } elseif ($extension === 'docx') {
+                // Use PhpWord for DOCX files
+                try {
+                    if (!class_exists('PhpOffice\PhpWord\IOFactory')) {
+                        throw new Exception("PhpWord library is not properly installed. Please run 'composer require phpoffice/phpword'");
+                    }
+                    
+                    Log::info("Starting DOCX processing for file: " . $filePath);
+                    
+                    $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
+                    $content = '';
+                    $sectionCount = 0;
+                    $elementCount = 0;
+                    
+                    foreach ($phpWord->getSections() as $section) {
+                        $sectionCount++;
+                        Log::info("Processing section " . $sectionCount);
+                        
+                        foreach ($section->getElements() as $element) {
+                            $elementCount++;
+                            
+                            // Log the type of element we're processing
+                            $elementType = get_class($element);
+                            Log::info("Processing element " . $elementCount . " of type: " . $elementType);
+                            
+                            if (method_exists($element, 'getText')) {
+                                $text = $element->getText();
+                                if (!empty($text)) {
+                                    $content .= $text . "\n";
+                                    Log::info("Extracted text from element: " . substr($text, 0, 100) . "...");
+                                }
+                            } else {
+                                Log::info("Element does not have getText method");
+                            }
+                        }
+                    }
+                    
+                    Log::info("DOCX processing completed. Sections: " . $sectionCount . ", Elements: " . $elementCount);
+                    
+                    if (empty($content)) {
+                        // Try alternative method if no content was extracted
+                        Log::info("No content extracted with primary method, trying alternative approach");
+                        $content = $this->extractDocxContentAlternative($filePath);
+                    }
+                    
+                    if (empty($content)) {
+                        throw new Exception("No text content could be extracted from the DOCX file. Processed " . $sectionCount . " sections and " . $elementCount . " elements.");
+                    }
+                    
+                    Log::info("Successfully extracted " . strlen($content) . " characters from DOCX file");
+                    
+                } catch (\Exception $e) {
+                    Log::error("Error processing DOCX file: " . $e->getMessage());
+                    throw new Exception("Failed to process DOCX file: " . $e->getMessage());
+                }
+            } elseif ($extension === 'txt') {
                 // For text files
                 $content = file_get_contents($filePath);
+            } else {
+                throw new Exception("Unsupported file type: {$extension}");
             }
 
             if (empty($content)) {
@@ -133,6 +192,9 @@ class RagService
 
     public function answerQuestion($question)
     {
+        // Test log to confirm function call
+        file_put_contents(__DIR__ . '/../../ragservice_debug.log', "answerQuestion called\n", FILE_APPEND);
+
         try {
             if (empty($question)) {
                 throw new Exception("Question cannot be empty");
@@ -488,6 +550,33 @@ class RagService
                 'trace' => $e->getTraceAsString()
             ]);
             throw $e;
+        }
+    }
+
+    private function extractDocxContentAlternative($filePath)
+    {
+        try {
+            $content = '';
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($filePath) === TRUE) {
+                // Read the document.xml file from the DOCX
+                $content = $zip->getFromName('word/document.xml');
+                $zip->close();
+                
+                if ($content) {
+                    // Remove XML tags and decode entities
+                    $content = strip_tags($content);
+                    $content = html_entity_decode($content, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                    $content = preg_replace('/\s+/', ' ', $content);
+                    $content = trim($content);
+                }
+            }
+            
+            return $content;
+        } catch (\Exception $e) {
+            Log::error("Alternative DOCX extraction failed: " . $e->getMessage());
+            return '';
         }
     }
 } 
