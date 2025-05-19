@@ -8,6 +8,8 @@ use OpenAI\Client as OpenAIClient;
 use OpenAI\Factory;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use PhpOffice\PhpWord\IOFactory;
+use PhpOffice\PhpWord\PhpWord;
 
 class RagService
 {
@@ -30,6 +32,7 @@ class RagService
 
     public function indexDocument($filePath)
     {
+        // --- DEBUG: Starting indexDocument method ---
         try {
             $startTime = microtime(true);
 
@@ -61,6 +64,26 @@ class RagService
                     $content = $pdf->getText();
                 } else {
                     $content = implode("\n", $output);
+                }
+            } elseif ($extension === 'docx') {
+                try {
+                    // Load the DOCX file
+                    $phpWord = IOFactory::load($filePath);
+                    
+                    // Extract text from all sections
+                    $content = '';
+                    foreach ($phpWord->getSections() as $section) {
+                        foreach ($section->getElements() as $element) {
+                            $content .= $this->extractTextFromElement($element) . "\n";
+                        }
+                    }
+                    
+                    if (empty($content)) {
+                        throw new Exception("No text content could be extracted from the DOCX file");
+                    }
+                } catch (Exception $e) {
+                    Log::error("Error processing DOCX file: " . $e->getMessage());
+                    throw new Exception("Failed to process DOCX file: " . $e->getMessage());
                 }
             } else {
                 // For text files
@@ -274,68 +297,6 @@ class RagService
         }
     }
 
-    // private function searchSimilarDocuments($embedding)
-    // {
-    //     try {
-    //         if (empty($embedding)) {
-    //             throw new Exception("Embedding cannot be empty");
-    //         }
-
-    //         $searchResult = $this->elasticsearch->search([
-    //             'index' => $this->indexName,
-    //             'body' => [
-    //                 'size' => 10,  // Increased from 5 to 10 for better coverage
-    //                 'query' => [
-    //                     'bool' => [
-    //                         'should' => [
-    //                             [
-    //                                 'script_score' => [
-    //                                     'query' => [
-    //                                         'match_all' => new \stdClass()
-    //                                     ],
-    //                                     'script' => [
-    //                                         'source' => 'cosineSimilarity(params.query_vector, "embedding") + 1.0',
-    //                                         'params' => ['query_vector' => $embedding]
-    //                                     ]
-    //                                 ]
-    //                             ],
-    //                             [
-    //                                 'match' => [
-    //                                     'content' => [
-    //                                         'query' => $this->getOriginalQuery(),
-    //                                         'boost' => 0.3
-    //                                     ]
-    //                                 ]
-    //                             ]
-    //                         ],
-    //                         'minimum_should_match' => 1
-    //                     ]
-    //                 ],
-    //                 '_source' => ['content', 'file_path', 'sourceName', 'chunk_index'],
-    //                 'track_scores' => true
-    //             ]
-    //         ]);
-
-    //         // Log search results for debugging
-    //         Log::info('Search query: ' . $this->getOriginalQuery());
-    //         Log::info('Total hits: ' . $searchResult['hits']['total']['value']);
-            
-    //         foreach ($searchResult['hits']['hits'] as $hit) {
-    //             Log::info('Document found:', [
-    //                 'file' => $hit['_source']['sourceName'],
-    //                 'chunk_index' => $hit['_source']['chunk_index'] ?? 'N/A',
-    //                 'score' => $hit['_score'],
-    //                 'content_preview' => substr($hit['_source']['content'], 0, 100) . '...'
-    //             ]);
-    //         }
-
-    //         return $searchResult;
-    //     } catch (Exception $e) {
-    //         Log::error('Error searching similar documents: ' . $e->getMessage());
-    //         throw $e;
-    //     }
-    // }
-
     private function getOriginalQuery()
     {
         return $this->originalQuery ?? '';
@@ -376,20 +337,21 @@ class RagService
     private function chunkText($text, $chunkSize = 1000)
     {
         $chunks = [];
-        $sentences = preg_split('/(?<=[.!?])\s+/', $text);
         $currentChunk = '';
+        $lines = explode("\n", $text);
         
-        foreach ($sentences as $sentence) {
-            if (strlen($currentChunk) + strlen($sentence) + 1 > $chunkSize) {
-                if (!empty($currentChunk)) {
-                    $chunks[] = trim($currentChunk);
-                }
-                $currentChunk = $sentence;
+        foreach ($lines as $line) {
+            // If adding this line would exceed chunk size, save current chunk and start new one
+            if (strlen($currentChunk . "\n" . $line) > $chunkSize && !empty($currentChunk)) {
+                $chunks[] = trim($currentChunk);
+                $currentChunk = $line;
             } else {
-                $currentChunk .= ($currentChunk ? ' ' : '') . $sentence;
+                // Add line to current chunk
+                $currentChunk .= (empty($currentChunk) ? '' : "\n") . $line;
             }
         }
         
+        // Add the last chunk if it's not empty
         if (!empty($currentChunk)) {
             $chunks[] = trim($currentChunk);
         }
@@ -397,7 +359,7 @@ class RagService
         return $chunks;
     }
 
-    private function cleanText($text)
+    private function cleanText(string $text): string
     {
         // Normalize line endings
         $text = str_replace(["\r\n", "\r"], "\n", $text);
@@ -477,15 +439,44 @@ class RagService
                 throw new Exception("Elasticsearch is not configured");
             }
 
+            // First, get all documents with this filename to ensure we delete all chunks
+            $searchResponse = $this->elasticsearch->search([
+                'index' => $this->indexName,
+                'body' => [
+                    'query' => [
+                        'bool' => [
+                            'should' => [
+                                ['term' => ['sourceName.keyword' => $fileName]],
+                                ['term' => ['sourceName.keyword' => basename($fileName)]],
+                                ['wildcard' => ['sourceName.keyword' => "*" . $fileName]]
+                            ],
+                            'minimum_should_match' => 1
+                        ]
+                    ]
+                ]
+            ]);
+
+            // Delete all matching documents
             $response = $this->elasticsearch->deleteByQuery([
                 'index' => $this->indexName,
                 'body' => [
                     'query' => [
-                        'term' => [
-                            'sourceName.keyword' => $fileName
+                        'bool' => [
+                            'should' => [
+                                ['term' => ['sourceName.keyword' => $fileName]],
+                                ['term' => ['sourceName.keyword' => basename($fileName)]],
+                                ['wildcard' => ['sourceName.keyword' => "*" . $fileName]]
+                            ],
+                            'minimum_should_match' => 1
                         ]
                     ]
                 ]
+            ]);
+
+            Log::info('Deleted documents for file:', [
+                'fileName' => $fileName,
+                'deletedCount' => $response['deleted'] ?? 0,
+                'totalHits' => $searchResponse['hits']['total']['value'] ?? 0
             ]);
 
             return $response;
@@ -562,5 +553,43 @@ class RagService
             ]);
             throw $e;
         }
+    }
+
+    private function extractTextFromElement($element): string
+    {
+        $text = '';
+
+        if ($element instanceof \PhpOffice\PhpWord\Element\AbstractContainer) {
+            foreach ($element->getElements() as $childElement) {
+                // Recursively get text and ensure it's a string before concatenating
+                $childText = $this->extractTextFromElement($childElement);
+                if (is_string($childText) && !empty($childText)) {
+                    $text .= $childText . " ";
+                }
+            }
+        } elseif ($element instanceof \PhpOffice\PhpWord\Element\Text) {
+            // Handle simple Text elements, ensure string conversion
+             $textResult = $element->getText();
+             if (is_string($textResult) && !empty($textResult)) {
+                 $text .= $textResult;
+             }
+        } elseif ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+             // Handle TextRun elements by processing their children
+             foreach ($element->getElements() as $childElement) {
+                 // Recursively get text and ensure it's a string before concatenating
+                 $childText = $this->extractTextFromElement($childElement);
+                 if (is_string($childText) && !empty($childText)) {
+                     $text .= $childText . " ";
+                 }
+             }
+        } elseif (method_exists($element, 'getText')) {
+            // Fallback for other elements with getText method, ensure string conversion
+            $textResult = $element->getText();
+            if (is_string($textResult) && !empty($textResult)) {
+                $text .= $textResult;
+            }
+        }
+
+        return trim($text);
     }
 } 

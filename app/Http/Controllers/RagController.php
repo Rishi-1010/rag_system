@@ -53,7 +53,19 @@ class RagController extends Controller
             if (!$request->hasFile('files')) {
                 return response()->json(['error' => 'No files uploaded'], 400);
             }
-            $projectId = $request->project_id ?? null;
+            
+            // Get project_id from request and validate it
+            $projectId = $request->input('project_id');
+            if (!$projectId) {
+                return response()->json(['error' => 'Project ID is required'], 400);
+            }
+            
+            // Verify project exists
+            $project = Project::find($projectId);
+            if (!$project) {
+                return response()->json(['error' => 'Selected project does not exist'], 400);
+            }
+
             ini_set('memory_limit', '512M');
             ini_set('max_execution_time', '900');
             set_time_limit(900);
@@ -66,7 +78,7 @@ class RagController extends Controller
             $maxFileSize = 50 * 1024 * 1024; // 50MB in bytes
             $results = [];
 
-            return response()->stream(function () use ($files, $maxFileSize, &$results , $projectId) {
+            return response()->stream(function () use ($files, $maxFileSize, &$results, $projectId) {
                 foreach ($files as $file) {
                     try {
                         if (!$file->isValid()) {
@@ -103,18 +115,22 @@ class RagController extends Controller
                             continue;
                         }
 
-                        $tempPath = storage_path('app' . DIRECTORY_SEPARATOR . 'temp');
-                        if (!file_exists($tempPath)) {
-                            mkdir($tempPath, 0755, true);
+                        // Create storage directory if it doesn't exist
+                        $storagePath = storage_path('app' . DIRECTORY_SEPARATOR . 'uploads');
+                        if (!file_exists($storagePath)) {
+                            mkdir($storagePath, 0755, true);
                         }
+
                         $originalSize = $file->getSize();
                         $filename = uniqid() . '_' . $file->getClientOriginalName();
-                        $fullPath = $tempPath . DIRECTORY_SEPARATOR . $filename;
-                        if (!$file->move($tempPath, $filename)) {
+                        $fullPath = $storagePath . DIRECTORY_SEPARATOR . $filename;
+
+                        // Move the file to storage
+                        if (!$file->move($storagePath, $filename)) {
                             throw new Exception("Failed to move uploaded file");
                         }
 
-                        // Save file info to DB
+                        // Save file info to DB with project_id
                         $fileModel = File::create([
                             'filename' => $filename,
                             'original_name' => $file->getClientOriginalName(),
@@ -126,15 +142,37 @@ class RagController extends Controller
                         ]);
 
                         $startTime = microtime(true);
+                        
+                        // Process the file based on its type
+                        $fileExtension = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+                        $content = '';
+                        
+                        switch ($fileExtension) {
+                            case 'pdf':
+                                // For PDF files, we'll store them as-is for now
+                                $content = "PDF file: " . $file->getClientOriginalName();
+                                break;
+                            case 'txt':
+                                $content = file_get_contents($fullPath);
+                                break;
+                            case 'doc':
+                            case 'docx':
+                                // For Word files, we'll store them as-is for now
+                                $content = "Word document: " . $file->getClientOriginalName();
+                                break;
+                            default:
+                                $content = "Unsupported file type: " . $file->getClientOriginalName();
+                        }
+
+                        // Index the content
                         $progressCallback = function ($progress) use ($file) {
                             $progress['file'] = $file->getClientOriginalName();
                             echo 'data: ' . json_encode($progress) . "\n\n";
                             ob_flush(); flush();
                         };
+
+                        // Store the content in Elasticsearch
                         $this->ragService->indexDocument($fullPath, $progressCallback);
-                        if (file_exists($fullPath)) {
-                            unlink($fullPath);
-                        }
 
                         // Update status in DB
                         $fileModel->update(['embedding_status' => 'completed']);
@@ -301,5 +339,46 @@ class RagController extends Controller
         $project = Project::create(['name' => $request->name]);
 
         return response()->json(['project' => $project]);
+    }
+
+    public function deleteProject(Project $project)
+    {
+        try {
+            // Get all files associated with this project
+            $files = $project->files;
+            
+            // Delete files from Elasticsearch and storage
+            foreach ($files as $file) {
+                try {
+                    // Delete from Elasticsearch
+                    $this->ragService->deleteDocumentsByFileName($file->original_name);
+                    
+                    // Delete physical file if it exists
+                    if (\Storage::exists($file->path)) {
+                        \Storage::delete($file->path);
+                    }
+                    
+                    // Delete file record from database
+                    $file->delete();
+                } catch (\Exception $e) {
+                    \Log::error('Error deleting file: ' . $e->getMessage());
+                    // Continue with other files even if one fails
+                }
+            }
+            
+            // Delete the project
+            $project->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Project and all associated files have been deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error deleting project: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to delete project: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

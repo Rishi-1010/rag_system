@@ -45,6 +45,18 @@ function initializeFileUpload() {
         debugLog('❌ Upload button not found');
         return;
     }
+
+    // Add project select change handler
+    const projectSelect = document.getElementById('projectSelect');
+    const selectedProjectId = document.getElementById('selectedProjectId');
+    if (projectSelect && selectedProjectId) {
+        projectSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            debugLog('Project selected:', selectedValue);
+            selectedProjectId.value = selectedValue;
+            uploadButton.disabled = !selectedValue;
+        });
+    }
     
     debugLog('✅ Upload form and button found!');
     
@@ -366,9 +378,10 @@ function initializeFileUpload() {
             `;
         }
         
-        // Enable button if there are valid files
-        newUploadButton.disabled = hasInvalidFiles;
-        debugLog(`🔓 Upload button ${hasInvalidFiles ? 'disabled' : 'enabled'} - ${hasInvalidFiles ? 'invalid files present' : 'all files valid'}`);
+        // Enable button if there are valid files and a project is selected
+        const projectSelect = document.getElementById('projectSelect');
+        newUploadButton.disabled = hasInvalidFiles || !projectSelect || !projectSelect.value;
+        debugLog(`🔓 Upload button ${newUploadButton.disabled ? 'disabled' : 'enabled'} - ${hasInvalidFiles ? 'invalid files present' : 'all files valid'} and project ${projectSelect && projectSelect.value ? 'selected' : 'not selected'}`);
     }
     
     // Add file input change handler
@@ -414,12 +427,212 @@ function initializeFileUpload() {
     }
     
     // Add click handler for upload button
-    newUploadButton.addEventListener('click', function() {
+    newUploadButton.addEventListener('click', async function() {
         debugLog('🎯 Upload button clicked');
-        if (fileInput.files.length > 0) {
-            newForm.dispatchEvent(new Event('submit'));
-        } else {
+        
+        const files = fileInput.files;
+        if (!files || files.length === 0) {
             debugLog('⚠️ No files selected');
+            return;
+        }
+
+        // Get project ID from the select element
+        const projectSelect = document.getElementById('projectSelect');
+        if (!projectSelect) {
+            debugLog('⚠️ Project select element not found');
+            alert('Please select a project first');
+            return;
+        }
+
+        const projectId = projectSelect.value;
+        if (!projectId) {
+            debugLog('⚠️ No project selected');
+            alert('Please select a project first');
+            return;
+        }
+
+        debugLog('📤 Sending fetch request with project ID:', projectId);
+        const formData = new FormData();
+        
+        // Add files to FormData
+        Array.from(files).forEach(file => {
+            formData.append('files[]', file);
+        });
+        
+        // Add project_id to FormData
+        formData.append('project_id', projectId);
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        
+        try {
+            // Show progress container
+            const progressContainer = document.getElementById('progressContainer');
+            if (progressContainer) {
+                progressContainer.classList.remove('hidden');
+                progressContainer.style.display = 'block';
+                progressContainer.style.opacity = '1';
+                progressContainer.style.visibility = 'visible';
+            }
+
+            // Update progress elements
+            const progressBar = document.getElementById('progressBar');
+            const progressStage = document.getElementById('progressStage');
+            const progressPercentage = document.getElementById('progressPercentage');
+            const progressDetails = document.getElementById('progressDetails');
+
+            if (progressBar) progressBar.style.width = '2%';
+            if (progressStage) progressStage.textContent = 'Initializing...';
+            if (progressPercentage) progressPercentage.textContent = '0%';
+            if (progressDetails) progressDetails.textContent = 'Starting upload...';
+
+            // Disable upload button
+            newUploadButton.disabled = true;
+
+            const response = await fetch('/rag/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            });
+
+            debugLog('📥 Response received');
+            debugLog('Data:', {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries())
+            });
+
+            if (!response.ok) {
+                // Try to get detailed error message from response
+                let errorMessage = `Server error (${response.status})`;
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorData.error || errorMessage;
+                } catch (e) {
+                    // If we can't parse JSON, try to get text
+                    try {
+                        const text = await response.text();
+                        if (text) errorMessage = text;
+                    } catch (e2) {
+                        // If all else fails, use status text
+                        errorMessage = response.statusText || errorMessage;
+                    }
+                }
+                throw new Error(errorMessage);
+            }
+
+            // Handle streaming response
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const {value, done} = await reader.read();
+                if (done) break;
+                
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            debugLog('📦 SSE Progress Event', data);
+                            
+                            if (data.status === 'error') {
+                                if (progressStage) progressStage.textContent = 'Error';
+                                if (progressDetails) progressDetails.textContent = data.message;
+                                throw new Error(data.message);
+                            } else if (data.status === 'duplicate') {
+                                if (progressStage) progressStage.textContent = 'Duplicate File';
+                                if (progressDetails) progressDetails.textContent = data.message;
+                            } else if (data.stage === 'validation') {
+                                if (progressStage) progressStage.textContent = 'Validating...';
+                                if (progressDetails) progressDetails.textContent = data.message;
+                            } else if (data.stage === 'processing') {
+                                if (progressStage) progressStage.textContent = 'Processing...';
+                                if (progressDetails) progressDetails.textContent = data.message;
+                                if (progressBar && data.progress) {
+                                    progressBar.style.width = `${data.progress}%`;
+                                }
+                                if (progressPercentage && data.progress) {
+                                    progressPercentage.textContent = `${data.progress}%`;
+                                }
+                            } else if (data.status === 'completed') {
+                                if (progressStage) progressStage.textContent = 'Completed';
+                                if (progressDetails) progressDetails.textContent = data.message;
+                                if (progressBar) progressBar.style.width = '100%';
+                                if (progressPercentage) progressPercentage.textContent = '100%';
+                                
+                                // Reset form and show success message
+                                fileInput.value = '';
+                                if (fileList) fileList.innerHTML = '<p class="text-gray-500 text-sm">No files selected</p>';
+                                if (progressContainer) progressContainer.classList.add('hidden');
+                                
+                                // Show success message
+                                const successMessage = document.getElementById('successMessage');
+                                if (successMessage) {
+                                    successMessage.classList.remove('hidden', 'translate-x-full');
+                                    successMessage.classList.add('translate-x-0');
+                                    setTimeout(() => {
+                                        successMessage.classList.add('translate-x-full');
+                                        setTimeout(() => {
+                                            successMessage.classList.add('hidden');
+                                        }, 500);
+                                    }, 5000);
+                                }
+                                
+                                refreshUploadedFiles();
+                            }
+                        } catch (e) {
+                            console.error('Error parsing progress data:', e, 'Raw line:', line);
+                            // Don't throw here, just log the error and continue
+                        }
+                    }
+                }
+            }
+
+            debugLog('✅ Upload successful');
+        } catch (error) {
+            debugLog('❌ Upload failed:', error);
+            
+            // Show error message
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                const messageSpan = errorMessage.querySelector('span.ml-2');
+                if (messageSpan) {
+                    messageSpan.textContent = error.message || 'An error occurred while uploading the files.';
+                }
+                errorMessage.classList.remove('hidden', 'translate-x-full');
+                errorMessage.classList.add('translate-x-0');
+                setTimeout(() => {
+                    errorMessage.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        errorMessage.classList.add('hidden');
+                    }, 500);
+                }, 5000);
+            } else {
+                alert(error.message || 'An error occurred while uploading the files.');
+            }
+
+            // Reset progress container
+            if (progressContainer) {
+                progressContainer.classList.add('hidden');
+            }
+            if (progressBar) {
+                progressBar.style.width = '0%';
+            }
+            if (progressStage) {
+                progressStage.textContent = 'Error';
+            }
+            if (progressDetails) {
+                progressDetails.textContent = error.message || 'Upload failed';
+            }
+        } finally {
+            newUploadButton.disabled = false;
         }
     });
     
@@ -486,7 +699,7 @@ function updateProgress(progress) {
 } 
 
 function refreshUploadedFiles() {
-    fetch('/rag/uploaded-files')
+    fetch('/rag/files/data')
         .then(res => res.text())
         .then(html => {
             // Update the uploaded files section

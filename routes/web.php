@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
 
         // PROJECTS
         Route::post('/projects', [RagController::class, 'storeProject']);
+        Route::delete('/projects/{project}', [RagController::class, 'deleteProject'])->name('projects.delete');
     });
     
     // Files Routes

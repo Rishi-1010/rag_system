@@ -47,11 +47,14 @@
                         <select id="projectSelect" name="project_id" class="form-select block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             <option value="">-- Select a Project --</option>
                             @foreach($projects as $project)
-                                <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                <option value="{{ $project->id }}" data-project-name="{{ $project->name }}">{{ $project->name }}</option>
                             @endforeach
                         </select>
                         <button type="button" id="addProjectButton" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition duration-200">
                             Add
+                        </button>
+                        <button type="button" id="removeProjectButton" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Remove
                         </button>
                     </div>
                 </div>
@@ -63,7 +66,7 @@
                 
                 <form id="uploadForm" class="space-y-4">
                     @csrf
-                    <input type="hidden" id="selectedProjectId" name="project_id">
+                    <input type="hidden" id="selectedProjectId" name="project_id" value="">
                     <!-- Drag & Drop Zone -->
                     <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 transition-all duration-200" 
                         id="dropZone">
@@ -248,114 +251,40 @@
 </style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize form elements
     const form = document.getElementById('uploadForm');
-    const fileInput = document.querySelector('input[type="file"]');
-    const fileList = document.getElementById('fileList');
+    const fileInput = form.querySelector('input[type="file"]');
     const uploadButton = document.getElementById('uploadButton');
-    const dropZone = document.getElementById('dropZone');
+    const fileList = document.getElementById('fileList');
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = document.getElementById('progressBar');
     const progressStage = document.getElementById('progressStage');
     const progressPercentage = document.getElementById('progressPercentage');
     const progressDetails = document.getElementById('progressDetails');
-    const estimatedTime = document.getElementById('estimatedTime');
-    const selectedProjectIdInput = document.getElementById('selectedProjectId');
-    
-    const addProjectButton = document.getElementById('addProjectButton');
-    const addProjectModal = document.getElementById('addProjectModal');
-    const cancelAddProject = document.getElementById('cancelAddProject');
-    const addProjectForm = document.getElementById('addProjectForm');
     const projectSelect = document.getElementById('projectSelect');
-    const hiddenProjectId = document.getElementById('selectedProjectId');
+    const selectedProjectId = document.getElementById('selectedProjectId');
 
-    const stageDescriptions = {
-        'initializing': 'Preparing files for processing',
-        'reading': 'Reading file contents',
-        'extracting': 'Extracting text from documents',
-        'cleaning': 'Cleaning and preparing text',
-        'chunking': 'Splitting text into chunks',
-        'processing': 'Generating embeddings',
-        'completed': 'Processing completed'
-    };
+    // Initialize project selection
+    if (projectSelect) {
+        projectSelect.addEventListener('change', function() {
+            const selectedValue = this.value;
+            selectedProjectId.value = selectedValue;
+            uploadButton.disabled = !selectedValue || !fileInput.files.length;
+        });
+    }
 
-    projectSelect.addEventListener('change', function () {
-        const selectedValue = this.value;
-        // Set the hidden input
-        hiddenProjectId.value = selectedValue;
-        jQuery('#selectedProjectId').val(selectedValue);
-        // Enable file input if a project is selected
-        fileInput.disabled = !selectedValue;
-    });
-    // Drag and drop handlers
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
+    // Handle file selection
+    fileInput.addEventListener('change', function() {
+        const files = this.files;
+        updateFileList(files);
+        uploadButton.disabled = !files.length || !selectedProjectId.value;
     });
 
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    function highlight(e) {
-        dropZone.classList.add('border-blue-500', 'bg-blue-50');
-    }
-
-    function unhighlight(e) {
-        dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-    }
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        fileInput.files = files;
-        updateFileList();
-    }
-
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function getFileIcon(fileType) {
-        const icons = {
-            'pdf': `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>`,
-            'txt': `<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>`,
-            'doc': `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>`
-        };
-        
-        if (fileType.includes('pdf')) return icons.pdf;
-        if (fileType.includes('text')) return icons.txt;
-        if (fileType.includes('word') || fileType.includes('doc')) return icons.doc;
-        return icons.txt;
-    }
-
-    function updateFileList() {
-        const files = fileInput.files;
-        
+    // Update file list display
+    function updateFileList(files) {
         fileList.innerHTML = '';
         if (!files || files.length === 0) {
             fileList.innerHTML = '<p class="text-gray-500 text-sm">No files selected</p>';
-            uploadButton.disabled = true;
             return;
         }
 
@@ -397,13 +326,10 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
 
-        uploadButton.disabled = hasInvalidFiles || files.length === 0;
+        uploadButton.disabled = hasInvalidFiles || !selectedProjectId.value;
     }
 
-    // File input change handler
-    fileInput.addEventListener('change', updateFileList);
-
-    // Upload button click handler
+    // Handle file upload
     uploadButton.addEventListener('click', async function() {
         const files = fileInput.files;
         if (!files || files.length === 0) {
@@ -411,28 +337,20 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        console.log('Upload started with files:', Array.from(files).map(f => f.name));
+        const projectId = selectedProjectId.value;
+        if (!projectId) {
+            alert('Please select a project first');
+            return;
+        }
 
-        // Hide any existing success message
-        hideSuccessMessage();
-
-        // Force show progress container
+        // Show progress container
         progressContainer.classList.remove('hidden');
         progressContainer.style.display = 'block';
         progressContainer.style.opacity = '1';
         progressContainer.style.visibility = 'visible';
-        
-        console.log('Progress container state:', {
-            hidden: progressContainer.classList.contains('hidden'),
-            display: progressContainer.style.display,
-            opacity: progressContainer.style.opacity,
-            visibility: progressContainer.style.visibility,
-            height: progressContainer.offsetHeight,
-            width: progressContainer.offsetWidth
-        });
 
         uploadButton.disabled = true;
-        progressBar.style.width = '2%'; // Start with minimum visible width
+        progressBar.style.width = '2%';
         progressStage.textContent = 'Initializing...';
         progressPercentage.textContent = '0%';
 
@@ -440,9 +358,9 @@ document.addEventListener('DOMContentLoaded', function() {
         Array.from(files).forEach(file => {
             formData.append('files[]', file);
         });
+        formData.append('project_id', projectId);
 
         try {
-            console.log('Sending upload request to /rag/upload');
             const response = await fetch('/rag/upload', {
                 method: 'POST',
                 body: formData,
@@ -451,178 +369,119 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
-            console.log('Upload response received:', {
-                status: response.status,
-                statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries())
-            });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Create EventSource for SSE
-            const eventSource = new EventSource('/rag/progress');
-            
-            eventSource.onmessage = function(event) {
-                console.log('SSE message received:', event.data);
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log('Parsed SSE data:', data);
-                    updateProgress(data);
-                } catch (e) {
-                    console.error('Error parsing SSE data:', e);
-                }
-            };
-
-            eventSource.onerror = function(error) {
-                console.error('SSE error:', error);
-                eventSource.close();
-            };
-
-            // Read the response
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
 
             while (true) {
                 const {value, done} = await reader.read();
-                if (done) {
-                    console.log('Stream reading completed');
-                    eventSource.close();
-                    break;
-                }
+                if (done) break;
                 
-                const chunk = decoder.decode(value);
-                console.log('Received chunk:', chunk);
-                const lines = chunk.split('\n');
-                
-                lines.forEach(line => {
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
                     if (line.startsWith('data: ')) {
                         try {
                             const data = JSON.parse(line.slice(6));
-                            console.log('Parsed progress data:', data);
-                            updateProgress(data);
+                            
+                            if (data.status === 'error') {
+                                progressStage.textContent = 'Error';
+                                progressDetails.textContent = data.message;
+                                throw new Error(data.message);
+                            } else if (data.status === 'duplicate') {
+                                progressStage.textContent = 'Duplicate File';
+                                progressDetails.textContent = data.message;
+                            } else if (data.stage === 'validation') {
+                                progressStage.textContent = 'Validating...';
+                                progressDetails.textContent = data.message;
+                            } else if (data.stage === 'processing') {
+                                progressStage.textContent = 'Processing...';
+                                progressDetails.textContent = data.message;
+                                progressBar.style.width = `${data.progress || 0}%`;
+                                progressPercentage.textContent = `${data.progress || 0}%`;
+                            } else if (data.status === 'completed') {
+                                progressStage.textContent = 'Completed';
+                                progressDetails.textContent = data.message;
+                                progressBar.style.width = '100%';
+                                progressPercentage.textContent = '100%';
+                                
+                                fileInput.value = '';
+                                fileList.innerHTML = '<p class="text-gray-500 text-sm">No files selected</p>';
+                                progressContainer.classList.add('hidden');
+                                uploadButton.disabled = false;
+                                showSuccessMessage();
+                                refreshUploadedFiles();
+                            }
                         } catch (e) {
                             console.error('Error parsing progress data:', e, 'Raw line:', line);
                         }
                     }
-                });
+                }
             }
-
-            // Reset form and show success message
-            form.reset();
-            fileList.innerHTML = '<p class="text-gray-500 text-sm">No files selected</p>';
-            progressContainer.classList.add('hidden');
-            uploadButton.disabled = false;
-            showSuccessMessage();
-            refreshUploadedFiles();
         } catch (error) {
             console.error('Upload error:', error);
-            alert('An error occurred while uploading the files');
+            progressStage.textContent = 'Error';
+            progressDetails.textContent = error.message;
+            alert('An error occurred while uploading the files: ' + error.message);
             uploadButton.disabled = false;
             progressContainer.classList.add('hidden');
         }
     });
 
-    function updateProgress(data) {
-        console.log('Updating progress with data:', data);
-        const statusIndicator = document.getElementById('statusIndicator');
-        const progressBar = document.getElementById('progressBar');
+    // Helper functions
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(fileType) {
+        const icons = {
+            'pdf': `<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>`,
+            'txt': `<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>`,
+            'doc': `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>`
+        };
         
-        // Log current state
-        console.log('Progress elements state:', {
-            container: {
-                hidden: progressContainer.classList.contains('hidden'),
-                display: progressContainer.style.display,
-                height: progressContainer.offsetHeight,
-                width: progressContainer.offsetWidth
-            },
-            progressBar: {
-                width: progressBar.style.width,
-                height: progressBar.offsetHeight,
-                visible: progressBar.offsetParent !== null
-            }
-        });
+        if (fileType.includes('pdf')) return icons.pdf;
+        if (fileType.includes('text')) return icons.txt;
+        if (fileType.includes('word') || fileType.includes('doc')) return icons.doc;
+        return icons.txt;
+    }
+
+    // Add remove file function to window scope
+    window.removeFile = function(fileName) {
+        const dt = new DataTransfer();
+        const files = fileInput.files;
         
-        if (data.status === 'processing' || data.status === 'success') {
-            const stage = data.stage || 'processing';
-            const progress = typeof data.progress === 'number' ? Math.round(data.progress) : 0;
-            
-            console.log('Processing stage:', stage, 'Progress:', progress);
-            
-            // Update status indicator
-            statusIndicator.className = 'w-3 h-3 rounded-full status-processing';
-            
-            // Ensure minimum width for visibility
-            const newWidth = Math.max(2, progress);
-            progressBar.style.width = `${newWidth}%`;
-            console.log('New progress bar width:', progressBar.style.width);
-            
-            progressBar.classList.remove('complete');
-            progressPercentage.textContent = `${progress}%`;
-            progressStage.textContent = stageDescriptions[stage] || stage;
-
-            // Force progress bar visibility
-            progressBar.style.display = 'block';
-            progressBar.style.opacity = '1';
-            progressBar.style.visibility = 'visible';
-
-            if (data.current && data.total) {
-                const currentChunk = parseInt(data.current) || 0;
-                const totalChunks = parseInt(data.total) || 1;
-                const percentage = Math.round((currentChunk / totalChunks) * 100);
-                console.log('Processing chunk:', currentChunk, 'of', totalChunks, 'Percentage:', percentage);
-                progressDetails.innerHTML = `
-                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-500" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Processing chunk ${currentChunk} of ${totalChunks}
-                `;
+        for (let i = 0; i < files.length; i++) {
+            if (files[i].name !== fileName) {
+                dt.items.add(files[i]);
             }
-
-            if (data.estimated_time) {
-                const timeInSeconds = parseInt(data.estimated_time) || 0;
-                estimatedTime.textContent = timeInSeconds > 0 ? `${formatTime(timeInSeconds)} remaining` : '';
-            }
-        } else if (data.status === 'completed' || data.status === 'success') {
-            console.log('Processing completed');
-            // Update status indicator
-            statusIndicator.className = 'w-3 h-3 rounded-full status-completed';
-            
-            progressBar.style.width = '100%';
-            progressBar.classList.add('complete');
-            progressPercentage.textContent = '100%';
-            progressStage.textContent = 'Processing completed';
-            progressDetails.innerHTML = `
-                <svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                ${data.message || 'Processing completed successfully'}
-            `;
-            estimatedTime.textContent = '';
-        } else if (data.status === 'error') {
-            console.error('Processing error:', data.message);
-            // Update status indicator
-            statusIndicator.className = 'w-3 h-3 rounded-full status-error';
-            
-            progressStage.textContent = 'Error occurred';
-            progressDetails.innerHTML = `
-                <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                ${data.message || 'An error occurred during processing'}
-            `;
         }
-    }
+        
+        fileInput.files = dt.files;
+        updateFileList(fileInput.files);
+    };
 
-    function formatTime(seconds) {
-        if (typeof seconds !== 'number' || isNaN(seconds)) return '';
-        if (seconds < 60) return `${Math.round(seconds)}s`;
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = Math.round(seconds % 60);
-        return `${minutes}m ${remainingSeconds}s`;
-    }
+    // Add form submit handler
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        uploadButton.click();
+    });
 
     function showSuccessMessage() {
         const successMessage = document.getElementById('successMessage');
@@ -660,11 +519,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function refreshUploadedFiles() {
-        fetch('/rag/uploaded-files')
+        fetch('/rag/files/data')
             .then(res => res.text())
             .then(html => {
                 // Update the uploaded files section
                 document.getElementById('uploadedFiles').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error refreshing files:', error);
             });
     }
     
@@ -763,25 +625,95 @@ document.addEventListener('DOMContentLoaded', function() {
             showErrorMessage('An unexpected error occurred. Please try again.');
         }
     });
-});
 
-$(document).ready(function () {
-    $('#searchInput').on('keyup', function () {
-        let query = $(this).val();
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            let query = this.value;
+            
+            fetch(`{{ route('home') }}?search=${encodeURIComponent(query)}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('filesList').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Search failed:', error);
+                });
+        });
+    }
 
-        $.ajax({
-            url: "{{ route('home') }}",  // You need to create this route
-            type: 'GET',
-            data: { search: query },
-            success: function (response) {
-                // Replace the files list content with the filtered results
-                $('#filesList').html(response);
-            },
-            error: function () {
-                console.error('Search failed');
+    if (removeProjectButton) {
+        removeProjectButton.addEventListener('click', async function() {
+            const projectSelect = document.getElementById('projectSelect');
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            
+            if (!selectedOption || !selectedOption.value) {
+                showErrorMessage('Please select a project to remove');
+                return;
+            }
+
+            const projectId = selectedOption.value;
+            const projectName = selectedOption.textContent;
+
+            // Show confirmation dialog
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `This will permanently delete the project "${projectName}" and all its associated files.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e3342f',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`/rag/projects/${projectId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        // Remove the option from select
+                        selectedOption.remove();
+                        
+                        // Reset the select if no options left
+                        if (projectSelect.options.length <= 1) {
+                            projectSelect.value = '';
+                            removeProjectButton.disabled = true;
+                        }
+
+                        // Show success message
+                        showSuccessMessage(`Project "${projectName}" has been deleted successfully.`);
+                        
+                        // Refresh the page after a short delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        throw new Error(data.message || 'Failed to delete project');
+                    }
+                } catch (error) {
+                    console.error('Error deleting project:', error);
+                    showErrorMessage(error.message || 'Failed to delete project. Please try again.');
+                }
             }
         });
-    });
+    }
+
+    // Update remove button state when project selection changes
+    if (projectSelect) {
+        projectSelect.addEventListener('change', function() {
+            if (removeProjectButton) {
+                removeProjectButton.disabled = !this.value;
+            }
+        });
+    }
 });
 </script>
 @endpush
