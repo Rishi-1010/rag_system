@@ -75,7 +75,7 @@
                                      role="textbox"
                                      aria-multiline="true"
                                      class="chat-input-editor w-full pr-10"
-                                     placeholder="Type your question here... (Shift + Enter for new line)"
+                                     placeholder="Type Your Question Here...."
                                      style="outline: none;"></div>
                             </div>
                             <button type="submit" id="send-button" class="chat-send-button">
