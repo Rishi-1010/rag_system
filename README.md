@@ -14,6 +14,41 @@ A Laravel-based Retrieval-Augmented Generation (RAG) system with document upload
 - Embedding generation via OpenAI
 - Storage and retrieval using Elasticsearch
 - Chat interface
+- Project-based document organization
+- Real-time upload progress tracking
+- File search and filtering
+- Pagination support
+- Document deletion capability
+
+---
+
+## Latest Updates (feature/rag-update)
+
+### New Features
+- Added project management system
+  - Create and manage multiple projects
+  - Associate documents with specific projects
+  - Project-based document filtering
+- Enhanced UI/UX
+  - Real-time upload progress tracking
+  - Improved file list with pagination
+  - Better error handling and notifications
+  - Modern Tailwind CSS styling
+- Improved Document Processing
+  - Better DOCX file support using PhpWord library
+  - Enhanced text extraction and cleaning
+  - Improved chunking algorithm
+- Added Search Functionality
+  - Search through uploaded documents
+  - Filter by project
+  - Sort by upload date
+
+### Technical Improvements
+- Added new database migrations for projects
+- Enhanced RagService with better error handling
+- Improved file processing pipeline
+- Added caching support
+- Better logging and monitoring
 
 ---
 
@@ -26,6 +61,9 @@ A Laravel-based Retrieval-Augmented Generation (RAG) system with document upload
 - **Home Page:** `/home`
   - File: `resources/views/rag/index.blade.php`
   - Main dashboard for uploading and managing documents.
+  - Project management interface
+  - Document upload with progress tracking
+  - File list with search and pagination
 
 ---
 
