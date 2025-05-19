@@ -186,11 +186,11 @@ class RagService
                 'messages' => [
                     [
                         'role' => 'system', 
-                        'content' => 'You are a helpful assistant. Answer the question based on the provided context. If the context contains the information, provide a detailed answer. If the context does not contain relevant information, say so. Include the source document name if relevant.'
+                        'content' => 'You are a helpful assistant. Answer the question based on the provided context. If the context contains the information, provide a detailed answer in a clear, point-wise format. Use bullet points or numbered lists where appropriate. If the context does not contain relevant information, say so.'
                     ],
                     [
                         'role' => 'user', 
-                        'content' => "Context:\n{$context}\n\nQuestion: {$question}\n\nPlease answer the question based solely on the provided context. If the context doesn't contain relevant information, say so."
+                        'content' => "Context:\n{$context}\n\nQuestion: {$question}\n\nPlease answer the question based solely on the provided context and format your answer as a list of points if possible."
                     ]
                 ],
                 'temperature' => 0.7,

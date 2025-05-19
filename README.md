@@ -34,6 +34,7 @@ A Laravel-based Retrieval-Augmented Generation (RAG) system with document upload
   - Improved file list with pagination
   - Better error handling and notifications
   - Modern Tailwind CSS styling
+- **Enhanced Chat Input:** The chat input area on the Ask Question page (`/rag/ask`) now supports multi-line input with Shift+Enter, expands automatically as you type, and becomes scrollable when it reaches a maximum height.
 - Improved Document Processing
   - Better DOCX file support using PhpWord library
   - Enhanced text extraction and cleaning

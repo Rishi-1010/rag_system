@@ -69,8 +69,16 @@
                     <div class="chat-input">
                         <form id="chat-form" class="input-group">
                             <input type="hidden" id="selectedProjectId" name="project_id">
-                            <input type="text" id="user-input" placeholder="Type your question here..." required autocomplete="off">
-                            <button type="submit" id="send-button">
+                            <div class="relative flex-grow">
+                                <div id="user-input" 
+                                     contenteditable="true"
+                                     role="textbox"
+                                     aria-multiline="true"
+                                     class="chat-input-editor w-full pr-10"
+                                     placeholder="Type your question here... (Shift + Enter for new line)"
+                                     style="outline: none;"></div>
+                            </div>
+                            <button type="submit" id="send-button" class="chat-send-button">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                                 </svg>
@@ -161,36 +169,76 @@
     }
 
     .chat-input input {
+        /* This rule is for the old input type="text", keeping it here just in case but it should not apply to the contenteditable div */
         flex-grow: 1;
         padding: 0.75rem 1rem;
         border: 1px solid #dee2e6;
         border-radius: 20px;
         outline: none;
         transition: border-color 0.2s;
+        line-height: 1.5;
+        resize: none;
+        overflow-y: auto;
+        min-height: 44px;
+        max-height: 200px;
     }
 
     .chat-input input:focus {
         border-color: #007bff;
     }
 
-    .chat-input button {
-        padding: 0.75rem;
+    /* Styles for the chat input editor (contenteditable div) */
+    .chat-input-editor {
+        border: 1px solid #dee2e6;
+        border-radius: 20px;
+        padding: 0.75rem 1rem;
+        line-height: 1.5;
+        resize: none;
+        overflow-y: auto;
+        /* Use min-height and max-height for expansion and scrolling */
+        min-height: 44px; /* Starting height */
+        max-height: 200px; /* Maximum height before scrolling */
+        /* Ensure it takes available width in the flex container */
+        flex-grow: 1;
+        min-width: 0; /* Allow flex item to shrink below content size */
+    }
+
+    .chat-input-editor:focus {
+        border-color: #007bff;
+    }
+
+    [contenteditable="true"]:empty:before {
+        content: attr(placeholder);
+        color: #6B7280;
+    }
+
+    [contenteditable="true"]:focus {
+        outline: none;
+    }
+
+    /* Styles for the send button */
+    .chat-send-button {
+        /* Adjust padding for tall, narrow oval shape */
+        padding: 1rem 0.75rem; 
         background: #007bff;
         color: white;
         border: none;
-        border-radius: 50%;
+        /* Use large border-radius for pill shape */
+        border-radius: 9999px;
         cursor: pointer;
         transition: background-color 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
+        /* Prevent vertical stretching and align to bottom */
+        align-self: flex-end;
     }
 
-    .chat-input button:hover {
+    .chat-send-button:hover {
         background: #0056b3;
     }
 
-    .chat-input button:disabled {
+    .chat-send-button:disabled {
         background: #6c757d;
         cursor: not-allowed;
     }
@@ -314,7 +362,16 @@
 
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
-            messageDiv.textContent = content;
+            
+            // Format the content with proper spacing and styling
+            const formattedContent = content
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+                .replace(/\n\n/g, '<br><br>') // Double newlines
+                .replace(/\n/g, '<br>') // Single newlines
+                .replace(/\d+\.\s+\*\*(.*?)\*\*/g, '<div class="mt-4"><strong class="text-indigo-600">$1</strong></div>') // Numbered sections
+                .replace(/-\s+(.*?)(?=<br>|$)/g, '<div class="ml-4">• $1</div>'); // Bullet points
+
+            messageDiv.innerHTML = formattedContent;
             messagesContainer.appendChild(messageDiv);
             scrollToBottom();
         }
@@ -336,10 +393,39 @@
             typingIndicator.classList.add('hidden');
         }
 
+        // Update input handling for contenteditable div
+        const userInput = document.getElementById('user-input');
+        
+        // Set placeholder text (optional, handled by CSS :empty:before now, but kept for robustness)
+        userInput.addEventListener('focus', function() {
+             // CSS handles this now, no need for JS to manipulate textContent
+        });
+
+        userInput.addEventListener('blur', function() {
+             // CSS handles this now, no need for JS to manipulate textContent
+        });
+
+        userInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    // Allow Shift+Enter for new line
+                    // Native contenteditable handles this, but prevent default to be sure
+                    e.preventDefault();
+                    document.execCommand('insertLineBreak');
+                } else {
+                    // Regular Enter submits the form
+                    e.preventDefault();
+                    document.getElementById('chat-form').dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
+        // Update form submission to get content from contenteditable div
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            const message = input.value.trim();
+            // Use innerText to preserve line breaks
+            const message = userInput.innerText.trim();
             const projectId = projectIdInput.value;
 
             if (!message) return;
@@ -350,7 +436,13 @@
 
             // Add user message
             addMessage(message, true);
-            input.value = '';
+            userInput.textContent = ''; // Clear contenteditable div
+
+            // Manually reset placeholder state if needed (CSS handles this better)
+            // if (!userInput.textContent.trim()) {
+            //     userInput.classList.add('empty'); // Add a class if using class-based placeholder
+            // }
+
             showTypingIndicator();
 
             try {
@@ -388,6 +480,11 @@
         // Initial state
         input.disabled = true;
         sendButton.disabled = true;
+
+        // Manually trigger placeholder state on load if contenteditable is empty
+        // if (!userInput.textContent.trim()) {
+        //     userInput.classList.add('empty'); // Add a class if using class-based placeholder
+        // }
     });
 </script>
 @endsection

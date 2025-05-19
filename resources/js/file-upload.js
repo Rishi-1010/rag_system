@@ -126,6 +126,13 @@ function initializeFileUpload() {
                 headers: Object.fromEntries(response.headers.entries())
             });
 
+            // Check for HTTP errors before attempting to read the body
+            if (!response.ok) {
+                const errorBody = await response.text(); // Attempt to read error response body
+                debugLog('❌ HTTP Error detected', { status: response.status, statusText: response.statusText, body: errorBody });
+                throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}, body: ${errorBody}`);
+            }
+
             // Handle streaming SSE
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
